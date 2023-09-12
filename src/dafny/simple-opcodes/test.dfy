@@ -404,6 +404,7 @@ function Block_0x191(st: ExecutingState):(st': State)
     requires st.Capacity() >= 8
 {
     //  prepare arguments to call and targets for computations
+    // assume st.Capacity() >= 8 ;
     var s1 := JumpDest(st);
     var s2 := Push2(s1, 0x1b8);
     var s3 := Push2(s2, 0x1a7);
@@ -414,7 +415,8 @@ function Block_0x191(st: ExecutingState):(st': State)
     assume s7.IsJumpDest(0x0142);
     var s8 := Jump(s7);
     assert s8.PC() == 0x142;
-    Block_0x142(s8)
+    assert s8.Capacity() >= 3;
+    Block_0x142(s8, s8.Peek(1))
 }
 
    
