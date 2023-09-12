@@ -1,0 +1,827 @@
+
+// mstore(64, memoryguard(128))
+00000000: PUSH1 0x80
+00000002: PUSH1 0x40
+00000004: MSTORE
+
+// if iszero(lt(calldatasize(), 4))
+            {
+                let selector := shift_right_224_unsigned(calldataload(0))
+                switch selector
+
+                case 0x145ce24f
+                {
+                    // decodeAndVerifyStackProofForPOP(VerifierHelper.StateProof)
+
+                    external_fun_decodeAndVerifyStackProofForPOP_45()
+                }
+
+                default {}
+            }
+
+            revert_error_42b3090547df1d2001c96683413b8cf91c1b902ef5e3cb8d9f6f304cf7446f74()
+
+//                                                      iszero(lt(calldatasize(), 4))
+00000005: PUSH1 0x4     //  [p,4]   
+00000007: CALLDATASIZE  //  [p,4, CALLDATASIZE]
+00000008: LT            //  [p, (CALLDATASIZE < 4)?1:0]
+00000009: ISZERO        //  [p, if CALLDATASIZE < 4 then 0 else 1]
+0000000a: PUSH2 0x13    //  [p, if CALLDATASIZE < 4 then 0 else 1, 0x13]
+0000000d: JUMPI         //   [p] jump to 0x13 if CALLDATASIZE >= 4
+
+//  CALLDATASIZE < 4 -> revert                          //
+// revert_error_42b3090547df1d2001c96683413b8cf91c1b902ef5e3cb8d9f6f304cf7446f74()
+
+0000000e: JUMPDEST
+0000000f: PUSH2 0x1bc   //  [p, 0x1bc]
+00000012: JUMP          //  [p]
+
+//  CALLDATASIZE >= 4                                   shift_right_224_unsigned(calldataload(0))
+00000013: JUMPDEST      //  [p]
+00000014: PUSH2 0x1e    //  [p, 0x1e] 
+00000017: PUSH1 0x0     //  [p, 0x1e, 0]
+00000019: CALLDATALOAD  //  [p, 0x1e, 0, calldataload[first 32 bytes at loc 0]]
+0000001a: PUSH2 0x2d    //  [p, 0x1e, calldataload[first 32 bytes], 0x2d]
+0000001d: JUMP          //  [p, 0x1e, calldataload[first 32 bytes]]
+
+//  jump to compute shiftright and return after
+// case 0x145ce24f
+                {
+                    // decodeAndVerifyStackProofForPOP(VerifierHelper.StateProof)
+
+                    external_fun_decodeAndVerifyStackProofForPOP_45()
+                }
+0000001e: JUMPDEST          //  [p, calldataload[first 32 bytes] shr 0xe0]
+0000001f: PUSH4 0x145ce24f  //  [p, calldataload[first 32 bytes] shr 0xe0, 0x145ce24f]
+00000024: SUB               //  [p, 0x145ce24f - calldataload[first 32 bytes] shr 0xe0]
+00000025: PUSH2 0xe         //  [p, 0x145ce24f - calldataload[first 32 bytes] shr 0xe0, 0xe]
+00000028: JUMPI             //  [p] and jump to 0xe (revert) if selector is not 0x145ce24f
+00000029: PUSH2 0x191       //  [p, 0x191] and 0x145ce24f - calldataload[first 32 bytes] shr 0xe0 == 0
+0000002c: JUMP              //  [p] jump top 0x191
+
+//  from 0000001d (shiftright)
+//  function shift_right_224_unsigned(value) -> newValue {
+                newValue :=
+
+                shr(224, value)
+
+            }
+0000002d: JUMPDEST      // [p, 0x1e, calldataload[first 32 bytes]]
+0000002e: PUSH1 0xe0    // [p, 0x1e, calldataload[first 32 bytes], 0xe0] (e0 = 224)
+00000030: SHR           // [p, 0x1e, calldataload[first 32 bytes] shr 0xe0] (extract 4 leftmost bytes of calldata)
+00000031: SWAP1         // [p, calldataload[first 32 bytes] shr 0xe0, 0x1e]
+00000032: JUMP          //  return to 0x1e
+
+// 00000097: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, 0x98] jump to 0x33
+
+// function allocate_unbounded() -> memPtr {
+            memPtr := mload(64)
+        }
+00000033: JUMPDEST      //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, 0x98]
+00000034: PUSH1 0x40    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, 0x98, 64]
+00000036: MLOAD         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, 0x98, mload(64)]
+00000037: SWAP1         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, mload(64), 0x98]      
+00000038: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, mload(64)] jump 0x98 
+
+// from 00000160
+//  revert_error_dbdddcbe895c83990c08b3492a0e83918d802a52331272ac6fdb6a7c4aea3b1b()
+00000039: JUMPDEST      //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize] 
+0000003a: PUSH1 0x0     //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 0] 
+0000003c: DUP1          //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 0, 0] 
+0000003d: REVERT        //  revert(0,0)
+
+// from 00000141: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize] jump to 0x3e
+//  revert_error_3538a459e4a0eb828f1aed5ebe5dc96fe59620a31d9b33e41259bb820cae769f()
+0000003e: JUMPDEST              //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize]
+0000003f: PUSH1 0x0             //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 0]
+00000041: DUP1                  //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 0, 0]
+00000042: REVERT                //  revert(0,0)
+
+//  from 0000006c: JUMP with [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, 96]
+//  function round_up_to_mul_of_32(value) -> result {
+                result := and(add(value, 31), not(31))
+            }
+00000043: JUMPDEST      //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, 96]
+00000044: PUSH1 0x1f    //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, 96, 31]
+00000046: DUP1          //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, 96, 31, 31]
+00000047: NOT           //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, 96, 31, not(31)]
+00000048: SWAP2         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, not(31), 31, 96]
+00000049: ADD           //    [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, not(31), 31 + 96]
+0000004a: AND           //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, not(31) and (31 + 96)]
+0000004b: SWAP1         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), not(31) and (31 + 96), 0x6d]
+0000004c: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), not(31) and (31 + 96)] jump to 0x6d
+
+0000004d: JUMPDEST
+0000004e: PUSH4 0x4e487b71
+00000053: PUSH1 0xe0
+00000055: SHL
+00000056: PUSH1 0x0
+00000058: MSTORE
+00000059: PUSH1 0x41
+0000005b: PUSH1 0x4
+0000005d: MSTORE
+0000005e: PUSH1 0x24
+00000060: PUSH1 0x0
+00000062: REVERT
+
+// from 0000009e: JUMP          //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, 96, load(64)] jump to 0x63
+// function finalize_allocation(memPtr, size) {
+                let newFreePtr := add(memPtr, round_up_to_mul_of_32(size))
+                // protect against overflow
+                if or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr)) { panic_error_0x41() }
+                mstore(64, newFreePtr)
+            }
+00000063: JUMPDEST  //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, 96, load(64)] 
+00000064: SWAP1     //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 96] 
+00000065: PUSH2 0x6d    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 96, 0x6d] 
+00000068: SWAP1         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, 96] 
+00000069: PUSH2 0x43    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, 96, 0x43] 
+0000006c: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, 96] jump to 0x43 and return via 0x6d
+
+//  from 0000004c: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), not(31) and (31 + 96)]
+//  part if or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr)) { panic_error_0x41() }
+                mstore(64, newFreePtr)
+0000006d: JUMPDEST          //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), not(31) and (31 + 96)]
+0000006e: DUP2              //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), not(31) and (31 + 96), load(64)]   not(31) and (31 + 96) -> round_up_to_mul_of_32(size) and load(64) is memPtr 
+0000006f: ADD               //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), (not(31) and (31 + 96)) + load(64)]
+00000070: SWAP1             //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), load(64)]
+00000071: DUP2              //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), load(64), (not(31) and (31 + 96)) + load(64)]
+00000072: LT                //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), (not(31) and (31 + 96)) + load(64) < load(64)]
+00000073: PUSH8 0xffffffffffffffff  //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), (not(31) and (31 + 96)) + load(64) < load(64), 0xffffffffffffffff]
+0000007c: DUP3        //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), (not(31) and (31 + 96)) + load(64) < load(64), 0xffffffffffffffff, (not(31) and (31 + 96)) + load(64) is newFreePtr]
+0000007d: GT        //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), (not(31) and (31 + 96)) + load(64) < load(64), gt(newFreePtr, 0xffffffffffffffff)
+0000007e: OR        // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr))]
+0000007f: PUSH2 0x87  // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr)), 0x87]
+00000082: JUMPI         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64)] jump to panic 0x41 otherwise mstore(64, newFreePtr)
+00000083: PUSH1 0x40    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), 0x40]
+00000085: MSTORE        //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f]  -> mstore(64, newFreePtr)
+00000086: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109] jump to 0x9f
+
+00000087: JUMPDEST
+00000088: PUSH2 0x4d
+0000008b: JUMP
+
+// from 00000108: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 0x109, 96] jump to 8c
+// function allocate_memory(size) -> memPtr {
+                memPtr := allocate_unbounded()
+                finalize_allocation(memPtr, size)
+            }
+
+0000008c: JUMPDEST      //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 0x109, 96]
+0000008d: SWAP1         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109]
+0000008e: PUSH2 0x9f    //  
+00000091: PUSH2 0x98    //  
+00000094: PUSH2 0x33    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, 0x98, 0x33]
+00000097: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, 0x98] jump to 0x33
+
+//  jump to and back from call 0x33 to allocate_unbounded()
+00000098: JUMPDEST      //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, mload(64)]
+00000099: SWAP3         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, 96]
+0000009a: DUP4          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, 96, load(64)]
+0000009b: PUSH2 0x63    //  
+0000009e: JUMP          //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, 96, load(64)] jump to 0x63
+
+//  from 00000086: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109] jump to 0x9f
+0000009f: JUMPDEST  // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109]
+000000a0: JUMP      //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64)] jump to 0x109 
+
+//  from 000000ac: JUMP          //  jump to 0xa1 (cleanup_t_bytes32(value)) [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 0xad, 0xc6]
+000000a1: JUMPDEST  //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 0xad, 4 + 0]
+000000a2: SWAP1     //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 4 + 0, 0xad]
+000000a3: JUMP      //  jump to 0xad [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 4 + 0]
+
+// from 000000c5: JUMP   jump to 0xa4 [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0] (to validator_revert_t_bytes32(value))
+// function validator_revert_t_bytes32(value) {
+                if iszero(eq(value, cleanup_t_bytes32(value))) { revert(0, 0) }
+            }
+000000a4: JUMPDEST      //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0] 
+000000a5: PUSH2 0xad    //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 0xad] 
+000000a8: DUP2          //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 0xad, 4 + 0]
+000000a9: PUSH2 0xa1    //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 0xad, 4 + 0 , 0xa1]
+000000ac: JUMP          //  jump to 0xa1 (cleanup_t_bytes32(value)) [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 0xad, 4 + 0]
+
+//   from 000000a3: JUMP      //  jump to 0xad [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 4 + 0 ]
+000000ad: JUMPDEST  //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 4 + 0] 
+000000ae: SUB       //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0 - 4] 
+000000af: PUSH2 0xb4    // 
+000000b2: JUMPI         // jump to 0xb4 if iszero(eq(value, cleanup_t_bytes32(value)))  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6] 
+000000b3: JUMP          //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117]  jump to 0xc6 else jump to 0xc6 (return from call to validator_revert_t_bytes32 )
+
+//  revert (0,0)
+000000b4: JUMPDEST   //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6]
+000000b5: PUSH1 0x0 //
+000000b7: DUP1      //  
+000000b8: REVERT    // revert (0,0)
+
+// from 00000116: JUMP          // jump to 0xb9 (abi_decode_t_bytes32) [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize, 4 + 0 + 0]
+// function abi_decode_t_bytes32(offset, end) -> value {
+                value := calldataload(offset)
+                validator_revert_t_bytes32(value)
+            }
+000000b9: JUMPDEST      //   [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize, 4 + 0 + 0]
+000000ba: SWAP1         //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, 4 , calldatasize]
+000000bb: POP           //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, 4 ]
+// value := calldataload(offset)
+000000bc: CALLDATALOAD  //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, value = read 32 bytes after 4 bytes of offset ]
+000000bd: SWAP1         //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117 ]
+000000be: PUSH2 0xc6    // [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6 ] (return address c6)
+000000c1: DUP3          //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0 ]
+000000c2: PUSH2 0xa4    // [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0, 0xa4 ]
+000000c5: JUMP          // jump to 0xa4 [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0x117, 0xc6, 4 + 0] (to validator_revert_t_bytes32(value))
+
+//  from 000000b3: JUMP          //  else jump to 0xc6 (return from call to validator_revert_t_bytes32)
+000000c6: JUMPDEST  
+000000c7: JUMP      //  jump to 0x117  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value] return from validator_revert_t_bytes32
+
+000000c8: JUMPDEST
+000000c9: SWAP1
+000000ca: JUMP
+
+000000cb: JUMPDEST
+000000cc: PUSH2 0xd4
+000000cf: DUP2
+000000d0: PUSH2 0xc8
+000000d3: JUMP
+
+000000d4: JUMPDEST
+000000d5: SUB
+000000d6: PUSH2 0xdb
+000000d9: JUMPI
+000000da: JUMP
+
+000000db: JUMPDEST
+000000dc: PUSH1 0x0
+000000de: DUP1
+000000df: REVERT
+
+000000e0: JUMPDEST
+000000e1: SWAP1
+000000e2: POP
+000000e3: CALLDATALOAD
+000000e4: SWAP1
+000000e5: PUSH2 0xed
+000000e8: DUP3
+000000e9: PUSH2 0xcb
+000000ec: JUMP
+
+000000ed: JUMPDEST
+000000ee: JUMP
+
+//  abi_decode_t_struct$_StateProof_$8_memory_ptr
+function abi_decode_t_struct$_StateProof_$8_memory_ptr(headStart, end) -> value {
+                if slt(sub(end, headStart), 0x60) { revert_error_3538a459e4a0eb828f1aed5ebe5dc96fe59620a31d9b33e41259bb820cae769f() }
+                value := allocate_memory(0x60)
+
+                {
+                    // stackHash
+
+                    let offset := 0
+
+                    mstore(add(value, 0x00), abi_decode_t_bytes32(add(headStart, offset), end))
+
+                }
+
+                {
+                    // stackHashAfterPops
+
+                    let offset := 32
+
+                    mstore(add(value, 0x20), abi_decode_t_bytes32(add(headStart, offset), end))
+
+                }
+
+                {
+                    // pops
+
+                    let offset := 64
+
+                    mstore(add(value, 0x40), abi_decode_t_uint256(add(headStart, offset), end))
+
+                }
+
+            }
+// from 00000158
+000000ef: JUMPDEST      //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4 + 0]
+000000f0: SWAP2         //   [p, 0x1b8, 0x1a7, 4 + 0, calldatasize, 0x1a2]
+000000f1: SWAP1         //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize]
+000000f2: PUSH1 0x60    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96]
+000000f4: DUP4          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96, 4 + 0]
+000000f5: DUP3          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96, 4 + 0, calldatasize]
+000000f6: SUB           //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96, calldatasize - 4]
+000000f7: SLT           //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, calldatasize - 4 < 96]
+000000fd: PUSH2 0x13d   //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, calldatasize - 4 < 96, 0x13d]
+000000fb: JUMPI         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize] jump to 0x13d if calldatasize - 4 < 96 ==> and revert
+                        //  if slt(sub(end, headStart), 0x60) is true
+000000fc: PUSH2 0x136   //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 0x136] 
+000000ff: SWAP1         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize] 
+00000100: PUSH2 0x109   //  
+00000103: PUSH1 0x60    //  
+00000105: PUSH2 0x8c    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 0x109, 96, 0x8c]
+00000108: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 0x109, 96] jump to 8c (allocate memory)
+
+// return from allocate memory 
+00000109: JUMPDEST      // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64)]
+0000010a: SWAP4         //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0 ]
+0000010b: PUSH2 0x117   //   [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117 ]
+0000010e: DUP3          //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize ]
+0000010f: PUSH1 0x0     //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize, 0 ]
+// add(value, 0x00)
+00000111: DUP4          //   [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize, 0, 4 + 0]
+00000112: ADD           //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize, 4 + 0 + 0]
+00000113: PUSH2 0xb9    //  
+// call to abi_decode_t_bytes32(add(headStart, offset), end))
+00000116: JUMP          // jump to 0xb9 (abi_decode_t_bytes32) [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize, 4 + 0 + 0]
+
+//   return from abi_decode_t_bytes32(add(headStart, offset), end))
+00000117: JUMPDEST      //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value]
+00000118: PUSH1 0x0     //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0]
+0000011a: DUP7          //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0, mload(64)]
+0000011b: ADD           //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, value, 0 + mload(64)] ==> add(value, 0x00)
+0000011c: MSTORE        //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0] store value at memory pointer 
+0000011d: PUSH2 0x129   //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x129]
+00000120: DUP3          //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x129, 0x136]
+
+00000121: PUSH1 0x20    //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x129, 0x136, 0x20]
+00000123: DUP4          //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x129, 0x136, 0x20, 4 + 0]
+00000124: ADD           //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x129, 0x136, 32 + 4 + 0] add(value, 0x20)
+00000125: PUSH2 0xb9    //  
+00000128: JUMP          //  jump to 0xb9 [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x129, 0x136, 32 + calldatsize]
+// call abi_decode_t_bytes32(add(headStart, offset), end))  again 
+//  return from call 
+00000129: JUMPDEST      //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0] return from call to 0xb9
+0000012a: PUSH1 0x20    //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 32] 
+0000012c: DUP7          //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 32, 0x1a7] 
+0000012d: ADD           //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 32, 0x1a7]
+0000012e: MSTORE
+0000012f: PUSH1 0x40
+00000131: ADD
+00000132: PUSH2 0xe0
+00000135: JUMP
+
+//  
+00000136: JUMPDEST
+00000137: PUSH1 0x40
+00000139: DUP4
+0000013a: ADD
+0000013b: MSTORE
+0000013c: JUMP
+
+//  from fd 
+0000013d: JUMPDEST      // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize]
+0000013e: PUSH2 0x3e    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 0x3e]
+00000141: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize] jump to 0x3e (revert)
+
+//  from 000001a1
+00000142: JUMPDEST      //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4]
+// abi_decode_tuple_t_struct$_StateProof_$8_memory_ptr(4, calldatasize()) ?
+00000143: SWAP1         //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize]
+00000144: PUSH1 0x60    //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 96]
+00000146: DUP3          //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 96, 4]
+00000147: DUP3          //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 96, 4, calldatasize]
+00000148: SUB           //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 96, calldatasize - 4]
+00000149: SLT           //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, calldatasize - 4 < 96]  slt(sub(dataEnd, headStart), 96)
+0000014a: PUSH2 0x15c   //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, calldatasize - 4 < 96, 0x15c]
+0000014d: JUMPI         //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize] jump to 0x15c if calldatasize - 4 < 96
+0000014e: PUSH2 0x159   //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize] and calldatasize - 4 >= 96
+00000151: SWAP2         //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4]
+00000152: PUSH1 0x0     //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4, 0]
+00000154: ADD           //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4 + 0]  add(headStart, offset)
+00000155: PUSH2 0xef    //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4 + 0, 0xef]
+00000158: JUMP          //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4 + 0] jump to 0xef call to abi_decode_t_struct$_StateProof_$8_memory_ptr(add(headStart, offset), dataEnd)
+
+00000159: JUMPDEST
+0000015a: SWAP1
+0000015b: JUMP
+
+//  from 0000014d
+0000015c: JUMPDEST      //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize]
+0000015d: PUSH2 0x39    //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 0x39]
+00000160: JUMP          //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize] jump to 0x39
+
+00000161: JUMPDEST
+00000162: PUSH8 0xffffffffffffffff
+0000016b: AND
+0000016c: SWAP1
+0000016d: JUMP
+
+0000016e: JUMPDEST
+0000016f: PUSH2 0x177
+00000172: SWAP1
+00000173: PUSH2 0x161
+00000176: JUMP
+
+00000177: JUMPDEST
+00000178: SWAP1
+00000179: MSTORE
+0000017a: JUMP
+
+0000017b: JUMPDEST
+0000017c: SWAP2
+0000017d: SWAP1
+0000017e: PUSH2 0x18f
+00000181: SWAP1
+00000182: PUSH1 0x0
+00000184: PUSH1 0x20
+00000186: DUP6
+00000187: ADD
+00000188: SWAP5
+00000189: ADD
+0000018a: SWAP1
+0000018b: PUSH2 0x16e
+0000018e: JUMP
+
+0000018f: JUMPDEST
+00000190: JUMP
+
+//  selector is 0x145ce24f, extract calldata
+// ??  external_fun_decodeAndVerifyStackProofForPOP_45()
+00000191: JUMPDEST      //  [p]
+00000192: PUSH2 0x1b8   //  [p, 0x1b8]
+00000195: PUSH2 0x1a7   //  [p, 0x1b8, 0x1a7]
+00000198: PUSH2 0x1a2   //  [p, 0x1b8, 0x1a7, 0x1a2]
+0000019b: CALLDATASIZE  //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize]
+0000019c: PUSH1 0x4     //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4]
+0000019e: PUSH2 0x142   //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4, 0x142]
+000001a1: JUMP          //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4]  jump to 0x142
+
+000001a2: JUMPDEST
+000001a3: PUSH2 0x2e7
+000001a6: JUMP
+
+000001a7: JUMPDEST
+000001a8: PUSH2 0x1af
+000001ab: PUSH2 0x33
+000001ae: JUMP
+
+000001af: JUMPDEST
+000001b0: SWAP2
+000001b1: DUP3
+000001b2: SWAP2
+000001b3: DUP3
+000001b4: PUSH2 0x17b
+000001b7: JUMP
+
+000001b8: JUMPDEST
+000001b9: SUB
+000001ba: SWAP1
+000001bb: RETURN
+
+// function revert_error_42b3090547df1d2001c96683413b8cf91c1b902ef5e3cb8d9f6f304cf7446f74() {
+                revert(0, 0)
+            }
+//  jump from calldatasize < 4
+000001bc: JUMPDEST      //  prepare revert(0,0) [p]
+000001bd: PUSH1 0x0     //  [p, 0]
+000001bf: DUP1          //  [p, 0, 0]
+000001c0: REVERT        //  revert(0,0) 
+
+
+000001c1: JUMPDEST
+000001c2: PUSH1 0x0
+000001c4: SWAP1
+000001c5: JUMP
+
+000001c6: JUMPDEST
+000001c7: PUSH2 0x1d0
+000001ca: SWAP1
+000001cb: MLOAD
+000001cc: PUSH2 0xa1
+000001cf: JUMP
+
+000001d0: JUMPDEST
+000001d1: SWAP1
+000001d2: JUMP
+
+000001d3: JUMPDEST
+000001d4: PUSH2 0x1dd
+000001d7: SWAP1
+000001d8: MLOAD
+000001d9: PUSH2 0xc8
+000001dc: JUMP
+
+000001dd: JUMPDEST
+000001de: SWAP1
+000001df: JUMP
+
+000001e0: JUMPDEST
+000001e1: SWAP1
+000001e2: JUMP
+
+000001e3: JUMPDEST
+000001e4: PUSH2 0x1ef
+000001e7: PUSH2 0x1f4
+000001ea: SWAP2
+000001eb: PUSH2 0xa1
+000001ee: JUMP
+
+000001ef: JUMPDEST
+000001f0: PUSH2 0x1e0
+000001f3: JUMP
+
+000001f4: JUMPDEST
+000001f5: SWAP1
+000001f6: MSTORE
+000001f7: JUMP
+
+000001f8: JUMPDEST
+000001f9: SWAP1
+000001fa: JUMP
+
+000001fb: JUMPDEST
+000001fc: PUSH2 0x207
+000001ff: PUSH2 0x20c
+00000202: SWAP2
+00000203: PUSH2 0xc8
+00000206: JUMP
+
+00000207: JUMPDEST
+00000208: PUSH2 0x1f8
+0000020b: JUMP
+
+0000020c: JUMPDEST
+0000020d: SWAP1
+0000020e: MSTORE
+0000020f: JUMP
+
+00000210: JUMPDEST
+00000211: PUSH1 0x20
+00000213: DUP2
+00000214: PUSH2 0x222
+00000217: PUSH2 0x22a
+0000021a: SWAP4
+0000021b: DUP4
+0000021c: SWAP7
+0000021d: SWAP6
+0000021e: PUSH2 0x1e3
+00000221: JUMP
+
+00000222: JUMPDEST
+00000223: ADD
+00000224: DUP1
+00000225: SWAP3
+00000226: PUSH2 0x1fb
+00000229: JUMP
+
+0000022a: JUMPDEST
+0000022b: ADD
+0000022c: SWAP1
+0000022d: JUMP
+
+0000022e: JUMPDEST
+0000022f: PUSH1 0x20
+00000231: ADD
+00000232: SWAP1
+00000233: JUMP
+
+00000234: JUMPDEST
+00000235: MLOAD
+00000236: SWAP1
+00000237: JUMP
+
+00000238: JUMPDEST
+00000239: PUSH1 0x20
+0000023b: SWAP2
+0000023c: DUP2
+0000023d: MSTORE
+0000023e: ADD
+0000023f: SWAP1
+00000240: JUMP
+
+00000241: JUMPDEST
+00000242: PUSH1 0x0
+00000244: PUSH32 0x42616420537461636b50726f6f66000000000000000000000000000000000000
+00000265: SWAP2
+00000266: ADD
+00000267: MSTORE
+00000268: JUMP
+
+00000269: JUMPDEST
+0000026a: PUSH2 0x276
+0000026d: PUSH1 0xe
+0000026f: PUSH1 0x20
+00000271: SWAP3
+00000272: PUSH2 0x238
+00000275: JUMP
+
+00000276: JUMPDEST
+00000277: PUSH2 0x27f
+0000027a: DUP2
+0000027b: PUSH2 0x241
+0000027e: JUMP
+
+0000027f: JUMPDEST
+00000280: ADD
+00000281: SWAP1
+00000282: JUMP
+
+00000283: JUMPDEST
+00000284: PUSH2 0x299
+00000287: SWAP1
+00000288: PUSH1 0x20
+0000028a: DUP2
+0000028b: ADD
+0000028c: SWAP1
+0000028d: PUSH1 0x0
+0000028f: DUP2
+00000290: DUP4
+00000291: SUB
+00000292: SWAP2
+00000293: ADD
+00000294: MSTORE
+00000295: PUSH2 0x269
+00000298: JUMP
+
+00000299: JUMPDEST
+0000029a: SWAP1
+0000029b: JUMP
+
+0000029c: JUMPDEST
+0000029d: ISZERO
+0000029e: PUSH2 0x2a3
+000002a1: JUMPI
+000002a2: JUMP
+
+000002a3: JUMPDEST
+000002a4: PUSH2 0x2ab
+000002a7: PUSH2 0x33
+000002aa: JUMP
+
+000002ab: JUMPDEST
+000002ac: PUSH3 0x461bcd
+000002b0: PUSH1 0xe5
+000002b2: SHL
+000002b3: DUP2
+000002b4: MSTORE
+000002b5: DUP1
+000002b6: PUSH2 0x2c1
+000002b9: PUSH1 0x4
+000002bb: DUP3
+000002bc: ADD
+000002bd: PUSH2 0x283
+000002c0: JUMP
+
+000002c1: JUMPDEST
+000002c2: SUB
+000002c3: SWAP1
+000002c4: REVERT
+
+000002c5: JUMPDEST
+000002c6: SWAP1
+000002c7: JUMP
+
+000002c8: JUMPDEST
+000002c9: SWAP1
+000002ca: JUMP
+
+000002cb: JUMPDEST
+000002cc: PUSH2 0x2df
+000002cf: PUSH2 0x2da
+000002d2: PUSH2 0x2e4
+000002d5: SWAP3
+000002d6: PUSH2 0x2c5
+000002d9: JUMP
+
+000002da: JUMPDEST
+000002db: PUSH2 0x2c8
+000002de: JUMP
+
+000002df: JUMPDEST
+000002e0: PUSH2 0x161
+000002e3: JUMP
+
+000002e4: JUMPDEST
+000002e5: SWAP1
+000002e6: JUMP
+
+000002e7: JUMPDEST
+000002e8: PUSH2 0x36c
+000002eb: SWAP1
+000002ec: PUSH2 0x2f3
+000002ef: PUSH2 0x1c1
+000002f2: JUMP
+
+000002f3: JUMPDEST
+000002f4: POP
+000002f5: PUSH2 0x366
+000002f8: PUSH2 0x360
+000002fb: PUSH2 0x35b
+000002fe: PUSH1 0x0
+00000300: PUSH2 0x30b
+00000303: PUSH1 0x20
+00000305: DUP7
+00000306: ADD
+00000307: PUSH2 0x1c6
+0000030a: JUMP
+
+0000030b: JUMPDEST
+0000030c: PUSH2 0x341
+0000030f: PUSH2 0x31a
+00000312: PUSH1 0x40
+00000314: DUP9
+00000315: ADD
+00000316: PUSH2 0x1d3
+00000319: JUMP
+
+0000031a: JUMPDEST
+0000031b: SWAP2
+0000031c: PUSH2 0x332
+0000031f: PUSH2 0x326
+00000322: PUSH2 0x33
+00000325: JUMP
+
+00000326: JUMPDEST
+00000327: SWAP4
+00000328: DUP5
+00000329: SWAP3
+0000032a: PUSH1 0x20
+0000032c: DUP5
+0000032d: ADD
+0000032e: PUSH2 0x210
+00000331: JUMP
+
+00000332: JUMPDEST
+00000333: PUSH1 0x20
+00000335: DUP3
+00000336: ADD
+00000337: DUP2
+00000338: SUB
+00000339: DUP3
+0000033a: MSTORE
+0000033b: SUB
+0000033c: DUP3
+0000033d: PUSH2 0x63
+00000340: JUMP
+
+00000341: JUMPDEST
+00000342: PUSH2 0x353
+00000345: PUSH2 0x34d
+00000348: DUP3
+00000349: PUSH2 0x234
+0000034c: JUMP
+
+0000034d: JUMPDEST
+0000034e: SWAP2
+0000034f: PUSH2 0x22e
+00000352: JUMP
+
+00000353: JUMPDEST
+00000354: SHA3
+00000355: SWAP5
+00000356: ADD
+00000357: PUSH2 0x1c6
+0000035a: JUMP
+
+0000035b: JUMPDEST
+0000035c: PUSH2 0xa1
+0000035f: JUMP
+
+00000360: JUMPDEST
+00000361: SWAP2
+00000362: PUSH2 0xa1
+00000365: JUMP
+
+00000366: JUMPDEST
+00000367: EQ
+00000368: PUSH2 0x29c
+0000036b: JUMP
+
+0000036c: JUMPDEST
+0000036d: PUSH2 0x376
+00000370: PUSH1 0x1
+00000372: PUSH2 0x2cb
+00000375: JUMP
+
+00000376: JUMPDEST
+00000377: SWAP1
+00000378: JUMP
+00000379: INVALID
+0000037a: LOG2
+0000037b: PUSH5 0x6970667358
+00000381: INVALID
+00000382: SLT
+00000383: SHA3
+00000384: SWAP3
+00000385: CODECOPY
+00000386: DUP5
+00000387: INVALID
+00000388: MUL
+00000389: INVALID
+0000038a: INVALID
+0000038b: EXTCODESIZE
+0000038c: INVALID
+0000038d: INVALID
+0000038e: INVALID
+0000038f: INVALID
+00000390: INVALID
+00000391: PUSH7 0x35df08fb64cad1
+00000399: XOR
+0000039a: INVALID
+0000039b: EXTCODEHASH
+0000039c: INVALID
+0000039d: DUP8
+0000039e: INVALID
+0000039f: STATICCALL
+000003a0: DUP8
+000003a1: INVALID
+000003a2: EXP
+

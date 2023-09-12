@@ -1,0 +1,390 @@
+IR:
+
+/// @use-src 0:"src/libraries/VerifierHelper.sol"
+object "VerifierHelper_46" {
+    code {
+        /// @src 0:769:3600  "library VerifierHelper {..."
+        mstore(64, memoryguard(128))
+        if callvalue() { revert_error_ca66f745a3ce8ff40e2ccaf1ad45db7774001b90d25810abd9040049be7bf4bb() }
+
+        let _1 := allocate_unbounded()
+        codecopy(_1, dataoffset("VerifierHelper_46_deployed"), datasize("VerifierHelper_46_deployed"))
+
+        setimmutable(_1, "library_deploy_address", address())
+
+        return(_1, datasize("VerifierHelper_46_deployed"))
+
+        /* x */ function allocate_unbounded() -> memPtr {
+            memPtr := mload(64)
+        }
+
+        function revert_error_ca66f745a3ce8ff40e2ccaf1ad45db7774001b90d25810abd9040049be7bf4bb() {
+            revert(0, 0)
+        }
+
+        /// @src 0:769:3600  "library VerifierHelper {..."
+        function constructor_VerifierHelper_46() {
+
+            /// @src 0:769:3600  "library VerifierHelper {..."
+
+        }
+        /// @src 0:769:3600  "library VerifierHelper {..."
+
+    }
+    /// @use-src 0:"src/libraries/VerifierHelper.sol"
+    object "VerifierHelper_46_deployed" {
+        code {
+            /// @src 0:769:3600  "library VerifierHelper {..."
+            mstore(64, memoryguard(128))
+
+            let called_via_delegatecall := iszero(eq(loadimmutable("library_deploy_address"), address()))
+
+            if iszero(lt(calldatasize(), 4))
+            {
+                let selector := shift_right_224_unsigned(calldataload(0))
+                switch selector
+
+                case 0x145ce24f
+                {
+                    // decodeAndVerifyStackProofForPOP(VerifierHelper.StateProof)
+
+                    external_fun_decodeAndVerifyStackProofForPOP_45()
+                }
+
+                default {}
+            }
+
+            revert_error_42b3090547df1d2001c96683413b8cf91c1b902ef5e3cb8d9f6f304cf7446f74()
+
+            /* x */ function shift_right_224_unsigned(value) -> newValue {
+                newValue :=
+
+                shr(224, value)
+
+            }
+
+            function allocate_unbounded() -> memPtr {
+                memPtr := mload(64)
+            }
+
+            function revert_error_dbdddcbe895c83990c08b3492a0e83918d802a52331272ac6fdb6a7c4aea3b1b() {
+                revert(0, 0)
+            }
+
+            function revert_error_c1322bf8034eace5e0b5c7295db60986aa89aae5e0ea0873e4689e076861a5db() {
+                revert(0, 0)
+            }
+
+            function revert_error_3538a459e4a0eb828f1aed5ebe5dc96fe59620a31d9b33e41259bb820cae769f() {
+                revert(0, 0)
+            }
+
+            /* x */ function round_up_to_mul_of_32(value) -> result {
+                result := and(add(value, 31), not(31))
+            }
+
+            function panic_error_0x41() {
+                mstore(0, 35408467139433450592217433187231851964531694900788300625387963629091585785856)
+                mstore(4, 0x41)
+                revert(0, 0x24)
+            }
+
+            /* x */ function finalize_allocation(memPtr, size) {
+                let newFreePtr := add(memPtr, round_up_to_mul_of_32(size))
+                // protect against overflow
+                if or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr)) { panic_error_0x41() }
+                mstore(64, newFreePtr)
+            }
+
+            /* x */ function allocate_memory(size) -> memPtr {
+                memPtr := allocate_unbounded()
+                finalize_allocation(memPtr, size)
+            }
+
+            function revert_error_5e8f644817bc4960744f35c15999b6eff64ae702f94b1c46297cfd4e1aec2421() {
+                revert(0, 0)
+            }
+
+            function cleanup_t_bytes32(value) -> cleaned {
+                cleaned := value
+            }
+
+            /* x */ function validator_revert_t_bytes32(value) {
+                if iszero(eq(value, cleanup_t_bytes32(value))) { revert(0, 0) }
+            }
+
+            /* x */ function abi_decode_t_bytes32(offset, end) -> value {
+                value := calldataload(offset)
+                validator_revert_t_bytes32(value)
+            }
+
+            function cleanup_t_uint256(value) -> cleaned {
+                cleaned := value
+            }
+
+            function validator_revert_t_uint256(value) {
+                if iszero(eq(value, cleanup_t_uint256(value))) { revert(0, 0) }
+            }
+
+            function abi_decode_t_uint256(offset, end) -> value {
+                value := calldataload(offset)
+                validator_revert_t_uint256(value)
+            }
+
+            // struct VerifierHelper.StateProof
+            function abi_decode_t_struct$_StateProof_$8_memory_ptr(headStart, end) -> value {
+                if slt(sub(end, headStart), 0x60) { revert_error_3538a459e4a0eb828f1aed5ebe5dc96fe59620a31d9b33e41259bb820cae769f() }
+                value := allocate_memory(0x60)
+
+                {
+                    // stackHash
+
+                    let offset := 0
+
+                    mstore(add(value, 0x00), abi_decode_t_bytes32(add(headStart, offset), end))
+
+                }
+
+                {
+                    // stackHashAfterPops
+
+                    let offset := 32
+
+                    mstore(add(value, 0x20), abi_decode_t_bytes32(add(headStart, offset), end))
+
+                }
+
+                {
+                    // pops
+
+                    let offset := 64
+
+                    mstore(add(value, 0x40), abi_decode_t_uint256(add(headStart, offset), end))
+
+                }
+
+            }
+
+            /* x */ function abi_decode_tuple_t_struct$_StateProof_$8_memory_ptr(headStart, dataEnd) -> value0 {
+                if slt(sub(dataEnd, headStart), 96) { revert_error_dbdddcbe895c83990c08b3492a0e83918d802a52331272ac6fdb6a7c4aea3b1b() }
+
+                {
+
+                    let offset := 0
+
+                    value0 := abi_decode_t_struct$_StateProof_$8_memory_ptr(add(headStart, offset), dataEnd)
+                }
+
+            }
+
+            function cleanup_t_uint64(value) -> cleaned {
+                cleaned := and(value, 0xffffffffffffffff)
+            }
+
+            function abi_encode_t_uint64_to_t_uint64_fromStack_library(value, pos) {
+                mstore(pos, cleanup_t_uint64(value))
+            }
+
+            function abi_encode_tuple_t_uint64__to_t_uint64__fromStack_library(headStart , value0) -> tail {
+                tail := add(headStart, 32)
+
+                abi_encode_t_uint64_to_t_uint64_fromStack_library(value0,  add(headStart, 0))
+
+            }
+
+            function external_fun_decodeAndVerifyStackProofForPOP_45() {
+
+                let param_0 :=  abi_decode_tuple_t_struct$_StateProof_$8_memory_ptr(4, calldatasize())
+                let ret_0 :=  fun_decodeAndVerifyStackProofForPOP_45(param_0)
+                let memPos := allocate_unbounded()
+                let memEnd := abi_encode_tuple_t_uint64__to_t_uint64__fromStack_library(memPos , ret_0)
+                return(memPos, sub(memEnd, memPos))
+
+            }
+
+            /* x */ function revert_error_42b3090547df1d2001c96683413b8cf91c1b902ef5e3cb8d9f6f304cf7446f74() {
+                revert(0, 0)
+            }
+
+            function zero_value_for_split_t_uint64() -> ret {
+                ret := 0
+            }
+
+            function read_from_memoryt_bytes32(ptr) -> returnValue {
+
+                let value := cleanup_t_bytes32(mload(ptr))
+
+                returnValue :=
+
+                value
+
+            }
+
+            function read_from_memoryt_uint256(ptr) -> returnValue {
+
+                let value := cleanup_t_uint256(mload(ptr))
+
+                returnValue :=
+
+                value
+
+            }
+
+            function leftAlign_t_bytes32(value) -> aligned {
+                aligned := value
+            }
+
+            function abi_encode_t_bytes32_to_t_bytes32_nonPadded_inplace_fromStack(value, pos) {
+                mstore(pos, leftAlign_t_bytes32(cleanup_t_bytes32(value)))
+            }
+
+            function leftAlign_t_uint256(value) -> aligned {
+                aligned := value
+            }
+
+            function abi_encode_t_uint256_to_t_uint256_nonPadded_inplace_fromStack(value, pos) {
+                mstore(pos, leftAlign_t_uint256(cleanup_t_uint256(value)))
+            }
+
+            function abi_encode_tuple_packed_t_bytes32_t_uint256__to_t_bytes32_t_uint256__nonPadded_inplace_fromStack(pos , value0, value1) -> end {
+
+                abi_encode_t_bytes32_to_t_bytes32_nonPadded_inplace_fromStack(value0,  pos)
+                pos := add(pos, 32)
+
+                abi_encode_t_uint256_to_t_uint256_nonPadded_inplace_fromStack(value1,  pos)
+                pos := add(pos, 32)
+
+                end := pos
+            }
+
+            function array_dataslot_t_bytes_memory_ptr(ptr) -> data {
+                data := ptr
+
+                data := add(ptr, 0x20)
+
+            }
+
+            function array_length_t_bytes_memory_ptr(value) -> length {
+
+                length := mload(value)
+
+            }
+
+            function array_storeLengthForEncoding_t_string_memory_ptr_fromStack(pos, length) -> updated_pos {
+                mstore(pos, length)
+                updated_pos := add(pos, 0x20)
+            }
+
+            function store_literal_in_memory_d4147e41af3273a69b394d30fedb150c277501a4bde0a6cf1862645febcaa05b(memPtr) {
+
+                mstore(add(memPtr, 0), "Bad StackProof")
+
+            }
+
+            function abi_encode_t_stringliteral_d4147e41af3273a69b394d30fedb150c277501a4bde0a6cf1862645febcaa05b_to_t_string_memory_ptr_fromStack(pos) -> end {
+                pos := array_storeLengthForEncoding_t_string_memory_ptr_fromStack(pos, 14)
+                store_literal_in_memory_d4147e41af3273a69b394d30fedb150c277501a4bde0a6cf1862645febcaa05b(pos)
+                end := add(pos, 32)
+            }
+
+            function abi_encode_tuple_t_stringliteral_d4147e41af3273a69b394d30fedb150c277501a4bde0a6cf1862645febcaa05b__to_t_string_memory_ptr__fromStack(headStart ) -> tail {
+                tail := add(headStart, 32)
+
+                mstore(add(headStart, 0), sub(tail, headStart))
+                tail := abi_encode_t_stringliteral_d4147e41af3273a69b394d30fedb150c277501a4bde0a6cf1862645febcaa05b_to_t_string_memory_ptr_fromStack( tail)
+
+            }
+
+            function require_helper_t_stringliteral_d4147e41af3273a69b394d30fedb150c277501a4bde0a6cf1862645febcaa05b(condition ) {
+                if iszero(condition) {
+                    let memPtr := allocate_unbounded()
+                    mstore(memPtr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                    let end := abi_encode_tuple_t_stringliteral_d4147e41af3273a69b394d30fedb150c277501a4bde0a6cf1862645febcaa05b__to_t_string_memory_ptr__fromStack(add(memPtr, 4) )
+                    revert(memPtr, sub(end, memPtr))
+                }
+            }
+
+            function cleanup_t_rational_1_by_1(value) -> cleaned {
+                cleaned := value
+            }
+
+            function identity(value) -> ret {
+                ret := value
+            }
+
+            function convert_t_rational_1_by_1_to_t_uint64(value) -> converted {
+                converted := cleanup_t_uint64(identity(cleanup_t_rational_1_by_1(value)))
+            }
+
+            /// @ast-id 45
+            /// @src 0:2402:3597  "function decodeAndVerifyStackProofForPOP(..."
+            function fun_decodeAndVerifyStackProofForPOP_45(var_stateProof_12_mpos) -> var__15 {
+                /// @src 0:2624:2630  "uint64"
+                let zero_t_uint64_1 := zero_value_for_split_t_uint64()
+                var__15 := zero_t_uint64_1
+
+                /// @src 0:2885:2895  "stateProof"
+                let _2_mpos := var_stateProof_12_mpos
+                let expr_19_mpos := _2_mpos
+                /// @src 0:2885:2914  "stateProof.stackHashAfterPops"
+                let _3 := add(expr_19_mpos, 32)
+                let _4 := read_from_memoryt_bytes32(_3)
+                let expr_20 := _4
+                /// @src 0:2873:2914  "bytes32 h = stateProof.stackHashAfterPops"
+                let var_h_18 := expr_20
+                /// @src 0:2955:2956  "h"
+                let _5 := var_h_18
+                let expr_26 := _5
+                /// @src 0:2958:2968  "stateProof"
+                let _6_mpos := var_stateProof_12_mpos
+                let expr_27_mpos := _6_mpos
+                /// @src 0:2958:2973  "stateProof.pops"
+                let _7 := add(expr_27_mpos, 64)
+                let _8 := read_from_memoryt_uint256(_7)
+                let expr_28 := _8
+                /// @src 0:2938:2974  "abi.encodePacked(h, stateProof.pops)"
+
+                let expr_29_mpos := allocate_unbounded()
+                let _9 := add(expr_29_mpos, 0x20)
+
+                let _10 := abi_encode_tuple_packed_t_bytes32_t_uint256__to_t_bytes32_t_uint256__nonPadded_inplace_fromStack(_9, expr_26, expr_28)
+                mstore(expr_29_mpos, sub(_10, add(expr_29_mpos, 0x20)))
+                finalize_allocation(expr_29_mpos, sub(_10, expr_29_mpos))
+                /// @src 0:2928:2975  "keccak256(abi.encodePacked(h, stateProof.pops))"
+                let expr_30 := keccak256(array_dataslot_t_bytes_memory_ptr(expr_29_mpos), array_length_t_bytes_memory_ptr(expr_29_mpos))
+                /// @src 0:2924:2975  "h = keccak256(abi.encodePacked(h, stateProof.pops))"
+                var_h_18 := expr_30
+                let expr_31 := expr_30
+                /// @src 0:3246:3247  "h"
+                let _11 := var_h_18
+                let expr_34 := _11
+                /// @src 0:3251:3261  "stateProof"
+                let _12_mpos := var_stateProof_12_mpos
+                let expr_35_mpos := _12_mpos
+                /// @src 0:3251:3271  "stateProof.stackHash"
+                let _13 := add(expr_35_mpos, 0)
+                let _14 := read_from_memoryt_bytes32(_13)
+                let expr_36 := _14
+                /// @src 0:3246:3271  "h == stateProof.stackHash"
+                let expr_37 := eq(cleanup_t_bytes32(expr_34), cleanup_t_bytes32(expr_36))
+                /// @src 0:3238:3290  "require(h == stateProof.stackHash, \"Bad StackProof\")"
+                require_helper_t_stringliteral_d4147e41af3273a69b394d30fedb150c277501a4bde0a6cf1862645febcaa05b(expr_37)
+                /// @src 0:3588:3589  "1"
+                let expr_41 := 0x01
+                /// @src 0:3587:3590  "(1)"
+                let expr_42 := expr_41
+                /// @src 0:3580:3590  "return (1)"
+                var__15 := convert_t_rational_1_by_1_to_t_uint64(expr_42)
+                leave
+
+            }
+            /// @src 0:769:3600  "library VerifierHelper {..."
+
+        }
+
+        data ".metadata" hex"a2646970667358221220923984240226b63bc3e44a2ead6635df08fb64cad118b93f5d87bbfa87b30a7964736f6c63430008150033"
+    }
+
+}
+
+
