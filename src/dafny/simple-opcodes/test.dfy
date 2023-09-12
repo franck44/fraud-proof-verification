@@ -372,10 +372,7 @@ function {:opaque} Block_0x1bc(st: ExecutingState):(st': State)
     requires st.Capacity() >= 2
     ensures st'.IsRevert()
 {
-    var s1 := JumpDest(st);
-    var s2 := Push1(s1, 0x0);
-    var s3 := Dup(s2, 1);
-    Revert(s3)
+    Revert(Dup(Push1(JumpDest(st), 0x0), 1))
 }
 
 /*
