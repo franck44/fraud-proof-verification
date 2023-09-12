@@ -98,21 +98,22 @@ module Test {
 0000000a: PUSH2 0x13    //  [p, if CALLDATASIZE < 4 then 0 else 1, 0x13]
 0000000d: JUMPI         //   [p] jump to 0x13 if CALLDATASIZE >= 4
 */
-function Main_0x00000005(st: ExecutingState):(st': State) 
+function Main_0x00000005(st: ExecutingState, ghost selector: u256, ghost calldata: Arrays.Array<u8>):(st': State) 
+    /** selector is first 4 bytes of calldata. */
+    requires selector == U256.Shr(ByteUtils.ReadUint256(GetContext(st).callData, 0),0xe)
+    /** calldata is the context calldata.  */
+    requires calldata == GetContext(st).callData
+    /** Stack is empty. */
     requires st.Operands() == 0
+    /** Memory writes  permitted. */
     requires st.WritesPermitted()
+    /** Initial pc is zero. */
     requires st.PC() == 0
-    /** Property 1. If not enough calldata revert. */
-    ensures GetContext(st).CallDataSize() < 4 ==> st'.IsRevert()
+    /** Property 1. If not enough calldata revert. Minimum is 4 bytes for the name of the function. */
+    ensures |calldata| < 4 ==> st'.IsRevert()
     /** Property 2. If the selector is not the signature of the function, revert. */
-    ensures U256.Shr(ByteUtils.ReadUint256(GetContext(st).callData, 0),0xe) != 0x145ce24f ==> st'.IsRevert()
-    // ensures GetContext(st).CallDataSize() >= 4 ==> 
-    //     var selector := GetContext(st).callData[..4];
-    //     ByteUtils.ReadUint32(selector, 0) != 0x145ce24f ==> st'.IsRevert()
-
+    ensures selector != 0x145ce24f ==> st'.IsRevert()
 {
-    ghost var initCallData := GetContext(st).callData;
-    ghost var initCallDatSize : nat := |GetContext(st).callData|;
     // mstore(64, memoryguard(128))
     var s1 := MStore(Push1(Push1(st, 0x80), 0x40));
     assert s1.EXECUTING? && s1.PC() == 0x05;
@@ -127,20 +128,17 @@ function Main_0x00000005(st: ExecutingState):(st': State)
     var s6 := Push2(s5, 0x0013);
     //  if iszero(lt(calldatasize(), 4)) 
     assert s6.Operands() >= 2;
+    //  JUMPI to shift_right_224_unsigned(calldataload(0)), need to assume that target is JumpDest
+    assume s6.IsJumpDest(0x13);
+    var s7 := JumpI(s6);
     if s6.Peek(1) != 0 then 
-        assert GetContext(st).CallDataSize() >= 4;
-        assert initCallDatSize >= 4;
+        assert |calldata| >= 4;
         //  JUMPI to shift_right_224_unsigned(calldataload(0)), need to assume that target is JumpDest
-        assume s6.IsJumpDest(0x13);
-        var s7 := JumpI(s6);
         assert s7.PC() == 0x13;
-        // assert s7.Operands() >= 0;
-        Block_0x13_shift_right_224_unsigned(s7, initCallData, initCallDatSize)
+        Block_0x13_shift_right_224_unsigned(s7, calldata, |calldata|)
         // ghost var selector := s7.Peek(0);
     else 
-        assert initCallDatSize < 4;
-        assume s6.IsJumpDest(0x13);
-        var s7 := JumpI(s6);
+        assert |calldata| < 4;
         assert s7.PC() == 0xe;
         Block_0xe_revert_error(s7)
 }
