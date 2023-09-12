@@ -121,7 +121,7 @@ function Main_0x00000005(st: ExecutingState, ghost selector: u256, ghost calldat
     //  iszero(lt(calldatasize(), 4))
     var s2 := Push1(s1, 0x04);
     var s3 := CallDataSize(s2);
-    assert s3.Peek(0) == GetContext(st).CallDataSize();
+    assert s3.Peek(0) == |calldata| as u256;
     var s4 := Lt(s3);
     var s5 := IsZero(s4);
     // assert s5.Operands() >= 1;
@@ -135,8 +135,7 @@ function Main_0x00000005(st: ExecutingState, ghost selector: u256, ghost calldat
         assert |calldata| >= 4;
         //  JUMPI to shift_right_224_unsigned(calldataload(0)), need to assume that target is JumpDest
         assert s7.PC() == 0x13;
-        Block_0x13_shift_right_224_unsigned(s7, calldata, |calldata|)
-        // ghost var selector := s7.Peek(0);
+        Block_0x13_shift_right_224_unsigned(s7, selector, calldata)
     else 
         assert |calldata| < 4;
         assert s7.PC() == 0xe;
@@ -180,18 +179,20 @@ function shift_right_224_unsigned(value) -> newValue {
 0000001a: PUSH2 0x2d    //  [p, 0x1e, calldataload[first 32 bytes], 0x2d]
 0000001d: JUMP          //  [p, 0x1e, calldataload[first 32 bytes]]
 */
-function Block_0x13_shift_right_224_unsigned(st: ExecutingState, ghost initcalldata: Arrays.Array<u8>, ghost initcalldatasize: nat):(st': State) 
+function Block_0x13_shift_right_224_unsigned(st: ExecutingState, ghost selector: u256, ghost calldata: Arrays.Array<u8>):(st': State) 
     requires st.PC() == 0x13
     requires st.Operands() >= 0
     requires st.Capacity() >= 12
-    ensures U256.Shr(ByteUtils.ReadUint256(GetContext(st).callData, 0),0xe) != 0x145ce24f ==> st'.IsRevert()
+    requires calldata == GetContext(st).callData
+    requires selector == U256.Shr(ByteUtils.ReadUint256(calldata, 0),0xe)
+    ensures selector != 0x145ce24f ==> st'.IsRevert()
 {
     var s1 := JumpDest(st);
     var s2 := Push2(s1, 0x1e);
     var s3 := Push1(s2, 0x00);
     assert s3.Capacity() >= 2;
     var s4 := CallDataLoad(s3);
-    assert s4.Peek(0) == ByteUtils.ReadUint256(GetContext(st).callData, 0);
+    assert s4.Peek(0) == ByteUtils.ReadUint256(calldata, 0);
     var s5 := Push2(s4, 0x2d);
     assert s5.Capacity() >= 1;
     // var s6 := Jump(s5); with jumps we need to prove that target is a jumpdest!!
@@ -201,8 +202,8 @@ function Block_0x13_shift_right_224_unsigned(st: ExecutingState, ghost initcalld
     assert s6.Capacity() >= 1;
     assert s6.Peek(1) ==  0x1e;
     assert s6.PC() == 0x2d;
-    assert s6.Peek(0) == ByteUtils.ReadUint256(GetContext(st).callData, 0);
-    Block_0x2d_shr(s6)
+    assert s6.Peek(0) == ByteUtils.ReadUint256(calldata, 0);
+    Block_0x2d_shr(s6, selector, calldata)
 }
 
 /*
@@ -220,11 +221,12 @@ function Block_0x13_shift_right_224_unsigned(st: ExecutingState, ghost initcalld
 00000025: PUSH2 0xe         //  [p, 0x145ce24f - calldataload[first 32 bytes] shr 0xe0, 0xe]
 00000028: JUMPI             //  [p] and jump to 0xe (revert) if selector is not 0x145ce24f
 */
-function Block_0x1e_case_0x145ce24f(st: ExecutingState):(st': State)
+function Block_0x1e_case_0x145ce24f(st: ExecutingState, ghost selector: u256, ghost calldata: Arrays.Array<u8> ):(st': State)
     requires st.Operands() >= 1
     requires st.Capacity() >= 9
     requires st.PC() == 0x1e
-    ensures st.Peek(0) != 0x145ce24f ==> st'.IsRevert()
+    requires selector == st.Peek(0)
+    ensures selector != 0x145ce24f ==> st'.IsRevert()
 {
     // assume st.Capacity() >= 7;
     var s1 := JumpDest(st);
@@ -237,19 +239,21 @@ function Block_0x1e_case_0x145ce24f(st: ExecutingState):(st': State)
     var s5 := JumpI(s4);
     if s4.Peek(1) != 0 then 
         //  selector is different to 0x145ce24f => revert
+        assert selector != 0x145ce24f;
         assert s5.PC() == 0xe;
         Block_0xe_revert_error(s5) 
     else 
         //  selector is 0x145ce24f => continue computation
+        assert selector == 0x145ce24f;
         assert s5.PC() == 0x29;
-        Block_0x29_case_0x145ce24f(s5)
+        Block_0x29_case_0x145ce24f(s5, selector, calldata)
 }
 
 /*
 00000029: PUSH2 0x191       //  [p, 0x191] and 0x145ce24f - calldataload[first 32 bytes] shr 0xe0 == 0
 0000002c: JUMP              //  [p] jump top 0x191
 */
-function Block_0x29_case_0x145ce24f(st: ExecutingState):(st': State)
+function Block_0x29_case_0x145ce24f(st: ExecutingState, ghost selector: u256, ghost calldata: Arrays.Array<u8>):(st': State)
     requires st.PC() == 0x29 
     requires st.Operands() >= 0
     requires st.Capacity() >= 8
@@ -271,15 +275,16 @@ function Block_0x29_case_0x145ce24f(st: ExecutingState):(st': State)
 00000031: SWAP1         // [p, calldataload[first 32 bytes] shr 0xe0, 0x1e]
 00000032: JUMP          //  return to 0x1e
 */
-function Block_0x2d_shr(st: ExecutingState):(st': State)
+function Block_0x2d_shr(st: ExecutingState, ghost selector: u256, ghost calldata: Arrays.Array<u8>):(st': State)
     requires st.PC() == 0x2d
     requires st.Operands() >= 2
     requires st.Peek(1) == 0x1e //  return address for shr(224, value)
     requires st.Capacity() >= 10
-    // ensures st'.EXECUTING?
-    // ensures st'.Operands() >= 1
-    // ensures st'.Peek(0) == U256.Shr(st.Peek(0), 0xe)
+    requires calldata == GetContext(st).callData
+    requires selector == U256.Shr(ByteUtils.ReadUint256(calldata, 0),0xe)    
+    requires ByteUtils.ReadUint256(calldata, 0) == st.Peek(0)
     ensures U256.Shr(st.Peek(0),0xe) != 0x145ce24f ==> st'.IsRevert()
+    ensures selector != 0x145ce24f ==> st'.IsRevert()
 {
     var s1 := JumpDest(st);
     var s2 := Push1(s1, 0xe);
@@ -291,7 +296,7 @@ function Block_0x2d_shr(st: ExecutingState):(st': State)
     assume s4.IsJumpDest(0x1e);
     var s5 := Jump(s4);
     assert s5.PC() == 0x1e;
-    Block_0x1e_case_0x145ce24f(s5)
+    Block_0x1e_case_0x145ce24f(s5, selector, calldata)
 }
 
 /*
