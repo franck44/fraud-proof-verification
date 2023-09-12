@@ -310,10 +310,36 @@ function abi_decode_tuple_t_struct$_StateProof_$8_memory_ptr(headStart, dataEnd)
 
     }
 */
-function Block_0x142(st: ExecutingState):(st': State)
+function Block_0x142(st: ExecutingState, calldatasize: u256):(st': State)
     requires st.PC() == 0x142
+    requires st.Operands() >= 2
+    requires st.Capacity() >= 3
+    requires calldatasize == st.Peek(1)
 {
-    st
+    var s1 := JumpDest(st);
+    //  chwck that calldatsize() - 4 >= 96 = 32 + 32 + 32 (3 u256 values)
+    var s2 := Swap(s1, 1);
+    var s3 := Push1(s2, 0x60); // push 96
+    var s4 := Dup(s3, 3);
+    var s5 := Dup(s4, 3);
+    var s6 := Sub(s5);
+    var s7 := SLt(s6);
+    var s8 := Push2(s7, 0x15c);
+    // jumpI 
+    // if s4.Peek(1) != 0 then 
+    //     //  selector is different to 0x145ce24f => revert
+    //     assume s4.IsJumpDest(0xe);
+    //     var s5 := JumpI(s4);
+    //     assert s5.PC() == 0xe;
+    //     Block_0xe_revert_error(s5) 
+    // else 
+    //     var s5 := Push2(s4, 0x191);
+    //     assume s5.IsJumpDest(0x191);
+    //     var s6 := Jump(s5);
+    //     assert s6.PC() == 0x191;
+    //     assert s6.Capacity() >= 8;
+    //     Block_0x191(s6)
+    s8
 }
 
 /*
