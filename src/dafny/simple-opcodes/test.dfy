@@ -183,7 +183,7 @@ function shift_right_224_unsigned(value) -> newValue {
 function Block_0x13_shift_right_224_unsigned(st: ExecutingState, ghost initcalldata: Arrays.Array<u8>, ghost initcalldatasize: nat):(st': State) 
     requires st.PC() == 0x13
     requires st.Operands() >= 0
-    requires st.Capacity() >= 8
+    requires st.Capacity() >= 12
     ensures U256.Shr(ByteUtils.ReadUint256(GetContext(st).callData, 0),0xe) != 0x145ce24f ==> st'.IsRevert()
 {
     var s1 := JumpDest(st);
@@ -224,7 +224,8 @@ function Block_0x13_shift_right_224_unsigned(st: ExecutingState, ghost initcalld
 */
 function Block_0x1e_case_0x145ce24f(st: ExecutingState):(st': State)
     requires st.Operands() >= 1
-    requires st.Capacity() >= 7
+    requires st.Capacity() >= 9
+    requires st.PC() == 0x1e
     ensures st.Peek(0) != 0x145ce24f ==> st'.IsRevert()
 {
     // assume st.Capacity() >= 7;
@@ -261,7 +262,7 @@ function Block_0x2d_shr(st: ExecutingState):(st': State)
     requires st.PC() == 0x2d
     requires st.Operands() >= 2
     requires st.Peek(1) == 0x1e //  return address for shr(224, value)
-    requires st.Capacity() >= 6
+    requires st.Capacity() >= 10
     // ensures st'.EXECUTING?
     // ensures st'.Operands() >= 1
     // ensures st'.Peek(0) == U256.Shr(st.Peek(0), 0xe)
@@ -387,7 +388,7 @@ function {:opaque} Block_0x1bc(st: ExecutingState):(st': State)
 */
 function Block_0x191(st: ExecutingState):(st': State) 
     requires st.PC() == 0x191 
-    requires st.Capacity() >= 6
+    requires st.Capacity() >= 8
 {
     //  prepare arguments to call and targets for computations
     var s1 := JumpDest(st);
