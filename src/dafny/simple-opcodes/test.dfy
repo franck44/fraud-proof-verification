@@ -219,8 +219,6 @@ function Block_0x13_shift_right_224_unsigned(st: ExecutingState, ghost initcalld
 00000024: SUB               //  [p, 0x145ce24f - calldataload[first 32 bytes] shr 0xe0]
 00000025: PUSH2 0xe         //  [p, 0x145ce24f - calldataload[first 32 bytes] shr 0xe0, 0xe]
 00000028: JUMPI             //  [p] and jump to 0xe (revert) if selector is not 0x145ce24f
-00000029: PUSH2 0x191       //  [p, 0x191] and 0x145ce24f - calldataload[first 32 bytes] shr 0xe0 == 0
-0000002c: JUMP              //  [p] jump top 0x191
 */
 function Block_0x1e_case_0x145ce24f(st: ExecutingState):(st': State)
     requires st.Operands() >= 1
@@ -234,19 +232,34 @@ function Block_0x1e_case_0x145ce24f(st: ExecutingState):(st': State)
     var s3 := Sub(s2);
     var s4 := Push2(s3, 0xe);
     assert s4.Capacity() >= 6;
+    assume s4.IsJumpDest(0xe);
+    assert s4.PC() == 0x28;
+    var s5 := JumpI(s4);
     if s4.Peek(1) != 0 then 
         //  selector is different to 0x145ce24f => revert
-        assume s4.IsJumpDest(0xe);
-        var s5 := JumpI(s4);
         assert s5.PC() == 0xe;
         Block_0xe_revert_error(s5) 
     else 
-        var s5 := Push2(s4, 0x191);
-        assume s5.IsJumpDest(0x191);
-        var s6 := Jump(s5);
-        assert s6.PC() == 0x191;
-        assert s6.Capacity() >= 6;
-        Block_0x191(s6)
+        //  selector is 0x145ce24f => continue computation
+        assert s5.PC() == 0x29;
+        Block_0x29_case_0x145ce24f(s5)
+}
+
+/*
+00000029: PUSH2 0x191       //  [p, 0x191] and 0x145ce24f - calldataload[first 32 bytes] shr 0xe0 == 0
+0000002c: JUMP              //  [p] jump top 0x191
+*/
+function Block_0x29_case_0x145ce24f(st: ExecutingState):(st': State)
+    requires st.PC() == 0x29 
+    requires st.Operands() >= 0
+    requires st.Capacity() >= 8
+{
+    var s1 := Push2(st, 0x191);
+    assume s1.IsJumpDest(0x191);
+    var s2 := Jump(s1);
+    assert s2.PC() == 0x191;
+    assert s2.Capacity() >= 8;
+    Block_0x191(s2)
 }
 
 /*
