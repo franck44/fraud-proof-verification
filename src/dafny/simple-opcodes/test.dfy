@@ -111,6 +111,8 @@ function Main_0x00000005(st: ExecutingState, ghost selector: u256, ghost calldat
     requires st.PC() == 0
     /** Property 1. If not enough calldata revert. Minimum is 4 bytes for the name of the function. */
     ensures |calldata| < 4 ==> st'.IsRevert()
+    //  need 96 bytes of argument (3 words)
+    ensures |calldata| - 4 < 96 ==> st'.IsRevert()
     /** Property 2. If the selector is not the signature of the function, revert. */
     ensures selector != 0x145ce24f ==> st'.IsRevert()
 {
@@ -141,6 +143,23 @@ function Main_0x00000005(st: ExecutingState, ghost selector: u256, ghost calldat
         assert s7.PC() == 0xe;
         Block_0xe_revert_error(s7)
 }
+
+/* 
+// from 00000160
+//  revert_error_dbdddcbe895c83990c08b3492a0e83918d802a52331272ac6fdb6a7c4aea3b1b()
+00000039: JUMPDEST      //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize] 
+0000003a: PUSH1 0x0     //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 0] 
+0000003c: DUP1          //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 0, 0] 
+0000003d: REVERT        //  revert(0,0)
+*/
+function {:opaque} Block_0x39_revert_error(st: ExecutingState):(st': State)
+    requires st.PC() == 0x39
+    requires st.Capacity() >= 2
+    ensures st'.IsRevert()
+{
+    Revert(Dup(Push1(JumpDest(st), 0x0), 1))
+}
+
 
 /*
 //  CALLDATASIZE < 4 -> revert                          //
@@ -184,8 +203,10 @@ function Block_0x13_shift_right_224_unsigned(st: ExecutingState, ghost selector:
     requires st.Operands() >= 0
     requires st.Capacity() >= 12
     requires calldata == GetContext(st).callData
+    requires |calldata| >= 4
     requires selector == U256.Shr(ByteUtils.ReadUint256(calldata, 0),0xe)
     ensures selector != 0x145ce24f ==> st'.IsRevert()
+    ensures |calldata| - 4 < 96 ==> st'.IsRevert()
 {
     var s1 := JumpDest(st);
     var s2 := Push2(s1, 0x1e);
@@ -225,8 +246,11 @@ function Block_0x1e_case_0x145ce24f(st: ExecutingState, ghost selector: u256, gh
     requires st.Operands() >= 1
     requires st.Capacity() >= 9
     requires st.PC() == 0x1e
+    requires calldata == GetContext(st).callData
+    requires |calldata| >= 4
     requires selector == st.Peek(0)
     ensures selector != 0x145ce24f ==> st'.IsRevert()
+    ensures |calldata| - 4 < 96 ==> st'.IsRevert()
 {
     // assume st.Capacity() >= 7;
     var s1 := JumpDest(st);
@@ -257,13 +281,16 @@ function Block_0x29_case_0x145ce24f(st: ExecutingState, ghost selector: u256, gh
     requires st.PC() == 0x29 
     requires st.Operands() >= 0
     requires st.Capacity() >= 8
+    requires calldata == GetContext(st).callData
+    requires |calldata| >= 4
+    ensures |calldata| - 4 < 96 ==> st'.IsRevert()
 {
     var s1 := Push2(st, 0x191);
     assume s1.IsJumpDest(0x191);
     var s2 := Jump(s1);
     assert s2.PC() == 0x191;
     assert s2.Capacity() >= 8;
-    Block_0x191(s2)
+    Block_0x191(s2, calldata)
 }
 
 /*
@@ -281,10 +308,12 @@ function Block_0x2d_shr(st: ExecutingState, ghost selector: u256, ghost calldata
     requires st.Peek(1) == 0x1e //  return address for shr(224, value)
     requires st.Capacity() >= 10
     requires calldata == GetContext(st).callData
+    requires |calldata| >= 4
     requires selector == U256.Shr(ByteUtils.ReadUint256(calldata, 0),0xe)    
     requires ByteUtils.ReadUint256(calldata, 0) == st.Peek(0)
     ensures U256.Shr(st.Peek(0),0xe) != 0x145ce24f ==> st'.IsRevert()
     ensures selector != 0x145ce24f ==> st'.IsRevert()
+    ensures |calldata| - 4 < 96 ==> st'.IsRevert()
 {
     var s1 := JumpDest(st);
     var s2 := Push1(s1, 0xe);
@@ -329,36 +358,74 @@ function abi_decode_tuple_t_struct$_StateProof_$8_memory_ptr(headStart, dataEnd)
 
     }
 */
-function Block_0x142(st: ExecutingState, calldatasize: u256):(st': State)
+function Block_0x142(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
     requires st.PC() == 0x142
     requires st.Operands() >= 2
     requires st.Capacity() >= 3
-    requires calldatasize == st.Peek(1)
+    requires calldata == GetContext(st).callData
+    requires |calldata| as u256 == st.Peek(1) >= 4
+    requires 4 == st.Peek(0)
+    ensures |calldata| - 4 < 96 ==> st'.IsRevert()
 {
     var s1 := JumpDest(st);
-    //  chwck that calldatsize() - 4 >= 96 = 32 + 32 + 32 (3 u256 values)
+    //  check that calldatasize() - 4 >= 96 = 32 + 32 + 32 (3 u256 values)
     var s2 := Swap(s1, 1);
     var s3 := Push1(s2, 0x60); // push 96
     var s4 := Dup(s3, 3);
     var s5 := Dup(s4, 3);
     var s6 := Sub(s5);
-    var s7 := SLt(s6);
+    assert s6.Peek(0) == |calldata| as u256 - 4;
+    // var s7 := SLt(s6);
+    //  @todo: why did the compiler insert a SLt??? and not a Lt?
+    //  It looks like it does not know that |calldata| - 4 >= 0 and that's OK, but is
+    //  the conversion to a signed comparison safe? Only of calldata 
+    var s7 := Lt(s6);
     var s8 := Push2(s7, 0x15c);
+    assume s8.IsJumpDest(0x15c);
+    var s9 := JumpI(s8);
     // jumpI 
-    // if s4.Peek(1) != 0 then 
-    //     //  selector is different to 0x145ce24f => revert
-    //     assume s4.IsJumpDest(0xe);
-    //     var s5 := JumpI(s4);
-    //     assert s5.PC() == 0xe;
-    //     Block_0xe_revert_error(s5) 
-    // else 
-    //     var s5 := Push2(s4, 0x191);
-    //     assume s5.IsJumpDest(0x191);
-    //     var s6 := Jump(s5);
-    //     assert s6.PC() == 0x191;
-    //     assert s6.Capacity() >= 8;
-    //     Block_0x191(s6)
-    s8
+    if s8.Peek(1) != 0 then 
+        assert |calldata| - 4 < 96;
+        assert s9.PC() == 0x15c;
+        Block_0x15c(s9, calldata)
+    else 
+        assert s9.PC() == 0x14e;
+        assert |calldata| - 4 >= 96;
+        Block_0x14e(s9, calldata)
+    // s8
+}
+
+/*
+0000014e: PUSH2 0x159   //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize] and calldatasize - 4 >= 96
+00000151: SWAP2         //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4]
+00000152: PUSH1 0x0     //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4, 0]
+00000154: ADD           //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4 + 0]  add(headStart, offset)
+00000155: PUSH2 0xef    //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4 + 0, 0xef]
+00000158: JUMP          //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4 + 0] jump to 0xef call to abi_decode_t_struct$_StateProof_$8_memory_ptr(add(headStart, offset), dataEnd)
+*/
+function Block_0x14e(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
+    requires st.PC() == 0x14e
+{
+    st
+}
+
+
+/*
+//  from 0000014d
+0000015c: JUMPDEST      //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize]
+0000015d: PUSH2 0x39    //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 0x39]
+00000160: JUMP          //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize] jump to 0x39
+*/
+function Block_0x15c(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
+    requires st.PC() == 0x15c
+    requires st.Capacity() >= 2
+    ensures st'.IsRevert()
+{
+    var s1 := JumpDest(st);
+    var s2 := Push2(s1, 0x39);
+    assume s2.IsJumpDest(0x39);
+    var s3 := Jump(s2);
+    Block_0x39_revert_error(s3)
 }
 
 /*
@@ -401,9 +468,12 @@ function {:opaque} Block_0x1bc(st: ExecutingState):(st': State)
 0000019e: PUSH2 0x142   //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4, 0x142]
 000001a1: JUMP          //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4]  jump to 0x142
 */
-function Block_0x191(st: ExecutingState):(st': State) 
+function Block_0x191(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State) 
     requires st.PC() == 0x191 
     requires st.Capacity() >= 8
+    requires calldata == GetContext(st).callData
+    requires |calldata| >= 4 
+    ensures |calldata| - 4 < 96 ==> st'.IsRevert()
 {
     //  prepare arguments to call and targets for computations
     // assume st.Capacity() >= 8 ;
@@ -418,7 +488,7 @@ function Block_0x191(st: ExecutingState):(st': State)
     var s8 := Jump(s7);
     assert s8.PC() == 0x142;
     assert s8.Capacity() >= 3;
-    Block_0x142(s8, s8.Peek(1))
+    Block_0x142(s8, calldata)
 }
 
    
