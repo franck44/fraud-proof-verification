@@ -219,7 +219,7 @@ function shift_right_224_unsigned(value) -> newValue {
 function Block_0x13_shift_right_224_unsigned(st: ExecutingState, ghost selector: u256, ghost calldata: Arrays.Array<u8>):(st': State) 
     requires st.PC() == 0x13
     requires st.Operands() >= 0
-    requires st.Capacity() >= 12
+    requires st.Capacity() >= 18
     requires calldata == GetContext(st).callData
     requires |calldata| >= 4
     requires selector == U256.Shr(ByteUtils.ReadUint256(calldata, 0),0xe)
@@ -262,7 +262,7 @@ function Block_0x13_shift_right_224_unsigned(st: ExecutingState, ghost selector:
 */
 function Block_0x1e_case_0x145ce24f(st: ExecutingState, ghost selector: u256, ghost calldata: Arrays.Array<u8> ):(st': State)
     requires st.Operands() >= 1
-    requires st.Capacity() >= 9
+    requires st.Capacity() >= 17
     requires st.PC() == 0x1e
     requires calldata == GetContext(st).callData
     requires |calldata| >= 4
@@ -275,7 +275,7 @@ function Block_0x1e_case_0x145ce24f(st: ExecutingState, ghost selector: u256, gh
     var s2 := Push4(s1,0x145ce24f);
     var s3 := Sub(s2);
     var s4 := Push2(s3, 0xe);
-    assert s4.Capacity() >= 6;
+    assert s4.Capacity() >= 14;
     assume s4.IsJumpDest(0xe);
     assert s4.PC() == 0x28;
     var s5 := JumpI(s4);
@@ -298,7 +298,7 @@ function Block_0x1e_case_0x145ce24f(st: ExecutingState, ghost selector: u256, gh
 function Block_0x29_case_0x145ce24f(st: ExecutingState, ghost selector: u256, ghost calldata: Arrays.Array<u8>):(st': State)
     requires st.PC() == 0x29 
     requires st.Operands() >= 0
-    requires st.Capacity() >= 8
+    requires st.Capacity() >= 16
     requires calldata == GetContext(st).callData
     requires |calldata| >= 4
     ensures |calldata| - 4 < 96 ==> st'.IsRevert()
@@ -307,7 +307,7 @@ function Block_0x29_case_0x145ce24f(st: ExecutingState, ghost selector: u256, gh
     assume s1.IsJumpDest(0x191);
     var s2 := Jump(s1);
     assert s2.PC() == 0x191;
-    assert s2.Capacity() >= 8;
+    assert s2.Capacity() >= 16;
     Block_0x191(s2, calldata)
 }
 
@@ -324,7 +324,7 @@ function Block_0x2d_shr(st: ExecutingState, ghost selector: u256, ghost calldata
     requires st.PC() == 0x2d
     requires st.Operands() >= 2
     requires st.Peek(1) == 0x1e //  return address for shr(224, value)
-    requires st.Capacity() >= 10
+    requires st.Capacity() >= 16
     requires calldata == GetContext(st).callData
     requires |calldata| >= 4
     requires selector == U256.Shr(ByteUtils.ReadUint256(calldata, 0),0xe)    
@@ -344,6 +344,25 @@ function Block_0x2d_shr(st: ExecutingState, ghost selector: u256, ghost calldata
     var s5 := Jump(s4);
     assert s5.PC() == 0x1e;
     Block_0x1e_case_0x145ce24f(s5, selector, calldata)
+}
+
+/*
+// function allocate_memory(size) -> memPtr {
+                memPtr := allocate_unbounded()
+                finalize_allocation(memPtr, size)
+            }
+
+0000008c: JUMPDEST      //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 0x109, 96]
+0000008d: SWAP1         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109]
+0000008e: PUSH2 0x9f    //  
+00000091: PUSH2 0x98    //  
+00000094: PUSH2 0x33    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, 0x98, 0x33]
+00000097: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, 0x98] jump to 0x33
+*/
+function Block_0x8c_allocate_memory(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
+    requires st.PC() == 0x8c  
+{
+    st
 }
 /*
 function abi_decode_t_struct$_StateProof_$8_memory_ptr(headStart, end) -> value {
@@ -388,22 +407,17 @@ function abi_decode_t_struct$_StateProof_$8_memory_ptr(headStart, end) -> value 
 000000f5: DUP3          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96, 4 + 0, calldatasize]
 000000f6: SUB           //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96, calldatasize - 4]
 000000f7: SLT           //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, calldatasize - 4 < 96]
-000000fd: PUSH2 0x13d   //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, calldatasize - 4 < 96, 0x13d]
+000000f8: PUSH2 0x13d   //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, calldatasize - 4 < 96, 0x13d]
 000000fb: JUMPI         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize] jump to 0x13d if calldatasize - 4 < 96 ==> and revert
 */
-function Block_0xef_abi_decode_t_struct_StateProof_8_memory_ptr(st: ExecutingState, ghost selector: u256, ghost calldata: Arrays.Array<u8>):(st': State)
+function Block_0xef_abi_decode_t_struct_StateProof_8_memory_ptr(st: ExecutingState,  ghost calldata: Arrays.Array<u8>):(st': State)
     requires st.PC() == 0xef
     requires st.Operands() >= 3
     requires st.Peek(1) == |calldata| as u256 
     requires st.Peek(0) == 4
     requires st.Capacity() >= 10
-    requires calldata == GetContext(st).callData
+    // requires calldata == GetContext(st).callData
     requires |calldata| >= 4 + 96
-    // requires selector == U256.Shr(ByteUtils.ReadUint256(calldata, 0),0xe)    
-    // requires ByteUtils.ReadUint256(calldata, 0) == st.Peek(0)
-    // ensures U256.Shr(st.Peek(0),0xe) != 0x145ce24f ==> st'.IsRevert()
-    // ensures selector != 0x145ce24f ==> st'.IsRevert()
-    // ensures |calldata| - 4 < 96 ==> st'.IsRevert()
 {
     var s1 := JumpDest(st);
     var s2 := Swap(s1, 2);
@@ -455,7 +469,7 @@ function Block_0xfc(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': 
     var s5 := Push2(s4, 0x8c);
     assume s5.IsJumpDest(0x8c);
     var s6 := Jump(s5);
-    s6
+    Block_0x8c_allocate_memory(s6, calldata)
 }
 
 /*
@@ -512,7 +526,7 @@ function abi_decode_tuple_t_struct$_StateProof_$8_memory_ptr(headStart, dataEnd)
 function Block_0x142(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
     requires st.PC() == 0x142
     requires st.Operands() >= 2
-    requires st.Capacity() >= 3
+    requires st.Capacity() >= 11
     requires calldata == GetContext(st).callData
     requires |calldata| as u256 == st.Peek(1) >= 4
     requires 4 == st.Peek(0)
@@ -556,11 +570,13 @@ function Block_0x142(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st':
 function Block_0x14e(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
     requires st.PC() == 0x14e
     requires |calldata| - 4 >= 96
-    requires st.Capacity() >= 2
+    // requires 
+    requires st.Capacity() >= 11
     requires st.Operands() >= 2
     requires st.Peek(0) == |calldata| as u256
     requires st.Peek(1) == 4
 {
+    // assume st.Capacity() >= 11;
     var s1 := Push2(st, 0x159);
     var s2 := Swap(s1, 2);
     var s3 := Push1(s2, 0x0);
@@ -568,7 +584,8 @@ function Block_0x14e(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st':
     var s5 := Push2(s4, 0xef);
     assume s5.IsJumpDest(0xef);
     var s6 := Jump(s5);
-    s6
+    assert s6.Capacity() >= 10;
+    Block_0xef_abi_decode_t_struct_StateProof_8_memory_ptr(s6, calldata)
 }
 
 
@@ -632,13 +649,12 @@ function {:opaque} Block_0x1bc(st: ExecutingState):(st': State)
 */
 function Block_0x191(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State) 
     requires st.PC() == 0x191 
-    requires st.Capacity() >= 8
+    requires st.Capacity() >= 16
     requires calldata == GetContext(st).callData
     requires |calldata| >= 4 
     ensures |calldata| - 4 < 96 ==> st'.IsRevert()
 {
     //  prepare arguments to call and targets for computations
-    // assume st.Capacity() >= 8 ;
     var s1 := JumpDest(st);
     var s2 := Push2(s1, 0x1b8);
     var s3 := Push2(s2, 0x1a7);
@@ -649,7 +665,7 @@ function Block_0x191(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st':
     assume s7.IsJumpDest(0x0142);
     var s8 := Jump(s7);
     assert s8.PC() == 0x142;
-    assert s8.Capacity() >= 3;
+    assert s8.Capacity() >= 11;
     Block_0x142(s8, calldata)
 }
 
