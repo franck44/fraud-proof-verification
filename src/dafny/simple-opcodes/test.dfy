@@ -160,6 +160,24 @@ function {:opaque} Block_0x39_revert_error(st: ExecutingState):(st': State)
     Revert(Dup(Push1(JumpDest(st), 0x0), 1))
 }
 
+/*
+
+// from 00000141: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize] jump to 0x3e
+//  revert_error_3538a459e4a0eb828f1aed5ebe5dc96fe59620a31d9b33e41259bb820cae769f()
+0000003e: JUMPDEST              //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize]
+0000003f: PUSH1 0x0             //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 0]
+00000041: DUP1                  //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 0, 0]
+00000042: REVERT                //  revert(0,0)
+*/
+/** This code is unreachable. */
+function {:opaque} Block_0x3e_revert_error(st: ExecutingState):(st': State)
+    requires false
+    requires st.PC() == 0x3e
+    requires st.Capacity() >= 2
+    ensures st'.IsRevert()
+{
+    Revert(Dup(Push1(JumpDest(st), 0x0), 1))
+}
 
 /*
 //  CALLDATASIZE < 4 -> revert                          //
@@ -327,6 +345,139 @@ function Block_0x2d_shr(st: ExecutingState, ghost selector: u256, ghost calldata
     assert s5.PC() == 0x1e;
     Block_0x1e_case_0x145ce24f(s5, selector, calldata)
 }
+/*
+function abi_decode_t_struct$_StateProof_$8_memory_ptr(headStart, end) -> value {
+                if slt(sub(end, headStart), 0x60) { revert_error_3538a459e4a0eb828f1aed5ebe5dc96fe59620a31d9b33e41259bb820cae769f() }
+                value := allocate_memory(0x60)
+
+                {
+                    // stackHash
+
+                    let offset := 0
+
+                    mstore(add(value, 0x00), abi_decode_t_bytes32(add(headStart, offset), end))
+
+                }
+
+                {
+                    // stackHashAfterPops
+
+                    let offset := 32
+
+                    mstore(add(value, 0x20), abi_decode_t_bytes32(add(headStart, offset), end))
+
+                }
+
+                {
+                    // pops
+
+                    let offset := 64
+
+                    mstore(add(value, 0x40), abi_decode_t_uint256(add(headStart, offset), end))
+
+                }
+
+            }
+
+// from 00000158
+000000ef: JUMPDEST      //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4 + 0]
+000000f0: SWAP2         //   [p, 0x1b8, 0x1a7, 4 + 0, calldatasize, 0x1a2]
+000000f1: SWAP1         //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize]
+000000f2: PUSH1 0x60    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96]
+000000f4: DUP4          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96, 4 + 0]
+000000f5: DUP3          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96, 4 + 0, calldatasize]
+000000f6: SUB           //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96, calldatasize - 4]
+000000f7: SLT           //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, calldatasize - 4 < 96]
+000000fd: PUSH2 0x13d   //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, calldatasize - 4 < 96, 0x13d]
+000000fb: JUMPI         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize] jump to 0x13d if calldatasize - 4 < 96 ==> and revert
+*/
+function Block_0xef_abi_decode_t_struct_StateProof_8_memory_ptr(st: ExecutingState, ghost selector: u256, ghost calldata: Arrays.Array<u8>):(st': State)
+    requires st.PC() == 0xef
+    requires st.Operands() >= 3
+    requires st.Peek(1) == |calldata| as u256 
+    requires st.Peek(0) == 4
+    requires st.Capacity() >= 10
+    requires calldata == GetContext(st).callData
+    requires |calldata| >= 4 + 96
+    // requires selector == U256.Shr(ByteUtils.ReadUint256(calldata, 0),0xe)    
+    // requires ByteUtils.ReadUint256(calldata, 0) == st.Peek(0)
+    // ensures U256.Shr(st.Peek(0),0xe) != 0x145ce24f ==> st'.IsRevert()
+    // ensures selector != 0x145ce24f ==> st'.IsRevert()
+    // ensures |calldata| - 4 < 96 ==> st'.IsRevert()
+{
+    var s1 := JumpDest(st);
+    var s2 := Swap(s1, 2);
+    var s3 := Swap(s2, 1);
+    var s4 := Push1(s3, 0x60);
+    var s5 := Dup(s4, 4);
+    var s6 := Dup(s5, 3);
+    assert s6.Peek(0) == |calldata| as u256;
+    assert s6.Peek(1) == 4;
+    var s7 := Sub(s6);
+    assert s7.Peek(0) == |calldata| as u256 - 4;
+    assert s7.Peek(1) == 96;
+    //  use Lt instead of SLt as peek(0) >= peek(1)
+    // var s8 := SLt(s7);
+    var s8 := Lt(s7);
+    assert s8.Peek(0) == 0;
+    var s9 := Push2(s8, 0x13d);
+    assume s9.IsJumpDest(0x13d);
+    var s10 := JumpI(s9);
+    // jumpI 
+    if s9.Peek(1) != 0 then 
+        //  This branch can never be taken
+        assert false;
+        assert s10.PC() == 0x13d;
+        Block_0x13d(s10)
+    else 
+        assert s10.PC() == 0xfc;
+        Block_0xfc(s10, calldata)
+}
+
+/* 
+//  if slt(sub(end, headStart), 0x60) is true
+000000fc: PUSH2 0x136   //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 0x136] 
+000000ff: SWAP1         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize] 
+00000100: PUSH2 0x109   //  
+00000103: PUSH1 0x60    //  
+00000105: PUSH2 0x8c    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 0x109, 96, 0x8c]
+00000108: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 0x109, 96] jump to 8c (allocate memory)
+*/
+function Block_0xfc(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
+    requires st.PC() == 0xfc
+    requires st.Operands() >= 1
+    requires st.Capacity() >= 3
+{
+    var s1 := Push2(st, 0x136);
+    var s2 := Swap(s1, 1);
+    var s3 := Push2(st, 0x109);
+    var s4 := Push1(s3, 0x60);
+    var s5 := Push2(s4, 0x8c);
+    assume s5.IsJumpDest(0x8c);
+    var s6 := Jump(s5);
+    s6
+}
+
+/*
+
+//  from fd 
+0000013d: JUMPDEST      // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize]
+0000013e: PUSH2 0x3e    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 0x3e]
+00000141: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize] jump to 0x3e (revert)
+
+*/
+/** This code is unreachable. */
+function Block_0x13d(st: ExecutingState): (st': State) 
+    requires false
+    requires st.PC() == 0x13d
+    requires st.Capacity() >= 2
+{   
+    var s1 := JumpDest(st);
+    var s2 := Push2(s1, 0x3e);
+    assume s2.IsJumpDest(0x3e);
+    var s3 := Jump(s2);
+    Block_0x3e_revert_error(s3)
+}
 
 /*
 00000142: JUMPDEST      //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4]
@@ -392,7 +543,6 @@ function Block_0x142(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st':
         assert s9.PC() == 0x14e;
         assert |calldata| - 4 >= 96;
         Block_0x14e(s9, calldata)
-    // s8
 }
 
 /*
@@ -405,8 +555,20 @@ function Block_0x142(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st':
 */
 function Block_0x14e(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
     requires st.PC() == 0x14e
+    requires |calldata| - 4 >= 96
+    requires st.Capacity() >= 2
+    requires st.Operands() >= 2
+    requires st.Peek(0) == |calldata| as u256
+    requires st.Peek(1) == 4
 {
-    st
+    var s1 := Push2(st, 0x159);
+    var s2 := Swap(s1, 2);
+    var s3 := Push1(s2, 0x0);
+    var s4 := Add(s3);
+    var s5 := Push2(s4, 0xef);
+    assume s5.IsJumpDest(0xef);
+    var s6 := Jump(s5);
+    s6
 }
 
 
