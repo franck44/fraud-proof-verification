@@ -356,7 +356,7 @@ function Block_0x2d_shr(st: ExecutingState, ghost selector: u256, ghost calldata
 00000037: SWAP1         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, mload(64), 0x98]      
 00000038: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, mload(64)] jump 0x98 
 */
-function Block_0x33_allocate_unbounded(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
+function Block_0x33_allocate_unbounded(st: ExecutingState, ghost size: u256):(st': State)
     requires st.PC() == 0x33
     requires st.Operands() >= 4
     requires st.Capacity() >= 4 
@@ -371,7 +371,7 @@ function Block_0x33_allocate_unbounded(st: ExecutingState, ghost calldata: Array
     assume s4.IsJumpDest(s4.Peek(0));
     var s5 := Jump(s4);
     assert s5.PC() == 0x98;
-    Block_0x98_finalize_allocation(s5, calldata)
+    Block_0x98_finalize_allocation(s5, size, s5.Peek(0))
 }
 
 
@@ -381,19 +381,23 @@ function Block_0x33_allocate_unbounded(st: ExecutingState, ghost calldata: Array
 
 // }
 
+// Some axioms relating bit vectors and their uint values. 
 lemma {:axiom} foo2(x: u8) 
     ensures !(x as bv8) as u8 == 255 - x
     // ensures !(x as bv8) as u8 == 256 - 31
-{
-    // assert x as bv8 == 0b0000_1111;
-}
+
 
 lemma {:axiom} foo3(x: u256) 
     ensures !(x as bv256) as nat == (TWO_256 - 1) - x as nat
     // ensures !(x as bv8) as u8 == 256 - 31
-{
-    // assert x as bv8 == 0b0000_1111;
-}
+
+
+lemma {:axiom} foo4(st: ExecutingState)
+    requires st.Operands() >= 3
+    requires st.Peek(0) == 31
+    requires st.Peek(1) == 31
+    requires st.Peek(2) == 96
+    ensures And(Add(Swap(Not(st), 1))).Peek(0) == 128
 
 /*
 x + !x == 256
@@ -413,26 +417,68 @@ x + !x == 256
 0000004b: SWAP1         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), not(31) and (31 + 96), 0x6d]
 0000004c: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), not(31) and (31 + 96)] jump to 0x6d
 */
-function Block_0x43_round_up_to_mul_of_32(st: ExecutingState, ghost value: u256):(st': State)
+function Block_0x43_round_up_to_mul_of_32(st: ExecutingState, ghost memPtr: u256, ghost size: u256):(st': State)
     requires st.PC() == 0x43
-    requires st.Operands() >= 1
+    requires st.Operands() >= 2
     requires st.Capacity() >= 2
     requires st.Peek(0) == 96
+    requires st.Peek(1) == 0x6d
 {
     var s1 := JumpDest(st);
     var s2 := Push1(s1, 0x1f);
     var s3 := Dup(s2, 1);
+    // stack is ... 96, 31, 31 <- top here
+    foo4(s3);
     var s4 := Not(s3);
-    // assert s3.Peek(0) == 31;
-    // foo3(s3.Peek(0));
-    // assert s4.Peek(0) as nat == TWO_256 - 1 - 31;
     var s5 := Swap(s4, 2);
     var s6 := Add(s5);
     var s7 := And(s6);
+    assert s7.Peek(0) == 128;
+    // 
     var s8 := Swap(s7, 1);
-    // assert s8.Peek(0) == 128;
-    s8
+    //  the result has a fixed value 128
+    assert s8.Peek(1) == 128;
+    assert s8.Peek(0) == 0x6d;
+    var s9 := Jump(s8);
+    assert s9.PC() == 0x6d;
+    Block_0x6d(s9, memPtr, size)
 
+}
+
+/*
+0000004d: JUMPDEST
+0000004e: PUSH4 0x4e487b71
+00000053: PUSH1 0xe0
+00000055: SHL
+00000056: PUSH1 0x0
+00000058: MSTORE
+00000059: PUSH1 0x41
+0000005b: PUSH1 0x4
+0000005d: MSTORE
+0000005e: PUSH1 0x24
+00000060: PUSH1 0x0
+00000062: REVERT
+
+function panic_error_0x41() {
+                mstore(0, 35408467139433450592217433187231851964531694900788300625387963629091585785856)
+                mstore(4, 0x41)
+                revert(0, 0x24)
+            }
+*/
+function {:opaque} Block_0x4d_panic_error_0x41(st: ExecutingState):(st': State)
+    requires st.PC() == 0x4d
+    requires st.Capacity() >= 2 
+    requires st.Operands() >= 2
+    ensures st'.IsRevert()
+{
+    var s1 := JumpDest(st);
+    var s2 := Push4(s1, 0x4e487b71);
+    var s3 := Push1(s2, 0xe0);
+    var s4 := Shl(s3);
+    var s5 := MStore(Push1(s4, 0x0));
+    var s6 := MStore(Push1(Push1(s5, 0x41),0x4));
+    var s7 := MStore(Push1(Push1(s5, 0x24),0x0));
+    Revert(s7)
 }
 
 /*
@@ -443,7 +489,7 @@ function Block_0x43_round_up_to_mul_of_32(st: ExecutingState, ghost value: u256)
 00000069: PUSH2 0x43    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, 96, 0x43] 
 0000006c: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), 0x6d, 96] jump to 0x43 and return via 0x6d
 */
-function Block_0x63(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
+function Block_0x63(st: ExecutingState, ghost size: u256, ghost memPtr: u256):(st': State)
     requires st.PC() == 0x63
     requires st.Capacity() >= 3
     requires st.Operands() >= 2
@@ -455,14 +501,124 @@ function Block_0x63(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': 
     var s4 := Swap(s3, 1);
     var s5 := Push2(s4, 0x43);
     assume s5.IsJumpDest(0x43);
-    //  compute round_up_to_mul_of_32(size)
+    //  compute round_up_to_mul_of_32(value := size)
     var s6 := Jump(s5);
-    Block_0x43_round_up_to_mul_of_32(s6, s6.Peek(0))
+    Block_0x43_round_up_to_mul_of_32(s6, size, memPtr)
 }
 
 /*
-0000006d
+0000006d: JUMPDEST          //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), not(31) and (31 + 96)]
+0000006e: DUP2              //   [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), not(31) and (31 + 96), load(64)]   not(31) and (31 + 96) -> round_up_to_mul_of_32(size) and load(64) is memPtr 
+0000006f: ADD               //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, load(64), (not(31) and (31 + 96)) + load(64)]
+00000070: SWAP1             //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), load(64)]
+00000071: DUP2              //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), load(64), (not(31) and (31 + 96)) + load(64)]
+00000072: LT                //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), (not(31) and (31 + 96)) + load(64) < load(64)]
+00000073: PUSH8 0xffffffffffffffff  //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), (not(31) and (31 + 96)) + load(64) < load(64), 0xffffffffffffffff]
+0000007c: DUP3        //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), (not(31) and (31 + 96)) + load(64) < load(64), 0xffffffffffffffff, (not(31) and (31 + 96)) + load(64) is newFreePtr]
+0000007d: GT        //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), (not(31) and (31 + 96)) + load(64) < load(64), gt(newFreePtr, 0xffffffffffffffff)
+0000007e: OR        // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr))]
+0000007f: PUSH2 0x87  // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr)), 0x87]
+00000082: JUMPI         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64)] jump to panic 0x41 otherwise mstore(64, newFreePtr)
 */
+function Block_0x6d(st: ExecutingState, ghost memPtr: u256, ghost size: u256):(st': State)
+    requires st.PC() == 0x6d
+    requires st.Operands() >= 3
+    requires st.Capacity() >= 2
+    requires st.Peek(2) == 0x9f
+    requires memPtr == st.Peek(1)
+    requires size == st.Peek(0)
+    /** Allocate beyond available memory generates a REVERT. */
+    ensures memPtr as nat + size as nat >= TWO_64 ==> st'.IsRevert() 
+    // ensures memPtr as nat + size as nat >= TWO_256 ==> st'.IsRevert() 
+{
+    var s1 := JumpDest(st); 
+    var s2 := Dup(s1, 2);   
+    var s3 := Add(s2);      
+    assert s3.Peek(2) == 0x9f;
+    //  newFreePtr is s3.Peek(0)
+    ghost var newFreePtr := s3.Peek(0);
+    assert newFreePtr == ((memPtr as nat + size as nat) % TWO_256) as u256 ;
+    // lt(newFreePtr, memPtr) -> check that previous Add operations did not overflow
+    var s4 := Swap(s3, 1);  
+    var s5 := Dup(s4, 2);   
+    var s6 := Lt(s5);   
+    assert s6.Peek(2) == 0x9f;
+    assert s6.Peek(1) == newFreePtr;
+
+    assert s6.Peek(0) == if newFreePtr < memPtr then 1 else 0;
+    // gt(newFreePtr, 0xffffffffffffffff) 0xffffffffffffffff == 2^64 - 1
+    var s7 := Push8(s6, 0xffffffffffffffff); 
+    var s8 := Dup(s7, 3);  
+    var s9 := Gt(s8); 
+    assert s9.Peek(3) == 0x9f; 
+    assert s9.Peek(2) == newFreePtr;
+    assert 0xffffffffffffffff == TWO_64 - 1;
+    assert s9.Peek(0) == if newFreePtr > 0xffffffffffffffff then 1 else 0;
+    // or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr))
+    var s10 := Or(s9);
+    // Maximum memory is 2^64 - 1 == 0xffffffffffffffff
+    assert s10.Peek(0) == if memPtr <= newFreePtr <= 0xffffffffffffffff then 0 else 1;
+    var s11 := Push2(s10, 0x87);
+    // JumpI to Panic 
+    assume s11.IsJumpDest(0x87);
+    assert s11.Peek(3) == 0x9f;
+    assert s11.Peek(2) == newFreePtr;
+    var s12 := JumpI(s11);
+    if s11.Peek(1) != 0 then 
+        assert s12.PC() == 0x87;
+        Block_0x87(s12)
+    else  
+        assert s12.PC() == 0x83;
+        assert s12.Peek(1) == 0x9f;
+        assert s12.Peek(0) == newFreePtr;
+        // s12
+        Block_0x83_mstore_64(s12, newFreePtr)
+}
+
+/*
+00000083: PUSH1 0x40    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), 0x40]
+00000085: MSTORE        //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f]  -> mstore(64, newFreePtr)
+00000086: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109] jump to 0x9f
+*/
+/** new memory pointer is within bounds <= TWO_64 - 1  */
+function Block_0x83_mstore_64(st: ExecutingState, ghost newFreePtr: u256):(st': State)
+    requires st.PC() == 0x83 
+    requires st.Operands() >= 2
+    requires st.Capacity() >= 1
+    requires st.Peek(1) == 0x9f
+    requires st.Peek(0) == newFreePtr
+{
+    var s1 := Push1(st, 0x40);
+    var s2 := MStore(s1);
+    assume s2.IsJumpDest(s2.Peek(0));
+    var s3 := Jump(s2);
+    assert s3.PC() == 0x9f;
+    s3
+}
+
+
+ /*
+ 00000087: JUMPDEST
+00000088: PUSH2 0x4d
+0000008b: JUMP
+ */
+ /**
+  @todo for some reasons if it is not opaque the caller 0x6d does ot type check (well formedness times out)
+  */
+ function {:opaque} Block_0x87(st: ExecutingState):(st': State)
+    requires st.PC() == 0x87
+    requires st.Capacity() >= 2
+    requires st.Operands() >= 2
+    ensures st'.IsRevert()
+ {
+    var s1 := JumpDest(st);
+    var s2 := Push2(s1, 0x4d);
+    assume s2.IsJumpDest(0x4d);
+    var s3 := Jump(s2);
+    assert s3.Operands() >= 2;
+    Block_0x4d_panic_error_0x41(s3)
+ }
+
 
 
 /*
@@ -478,7 +634,7 @@ function Block_0x63(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': 
 00000094: PUSH2 0x33    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, 0x98, 0x33]
 00000097: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, 96, 0x109, 0x9f, 0x98] jump to 0x33
 */
-function Block_0x8c_allocate_memory(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
+function Block_0x8c_allocate_memory(st: ExecutingState, ghost size: u256):(st': State)
     requires st.PC() == 0x8c  
     requires st.Operands() >= 2
     requires st.Capacity() >= 6
@@ -492,8 +648,10 @@ function Block_0x8c_allocate_memory(st: ExecutingState, ghost calldata: Arrays.A
     assume s5.IsJumpDest(0x33);
     var s6 := Jump(s5);
     assert s6.PC() == 0x33;
+    assert s6.Peek(3) == 96;
+    ghost var size := s6.Peek(3);
     //  allocate_unbounded()
-    Block_0x33_allocate_unbounded(s6, calldata)
+    Block_0x33_allocate_unbounded(s6, size)
 }
 
 /*
@@ -511,7 +669,7 @@ function finalize_allocation(memPtr, size) {
                 mstore(64, newFreePtr)
             }
 */
-function Block_0x98_finalize_allocation(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
+function Block_0x98_finalize_allocation(st: ExecutingState, ghost size: u256, ghost memPtr: u256):(st': State)
     requires st.PC() == 0x98
     requires st.Operands() >= 4
     requires st.Capacity() >= 4
@@ -523,7 +681,7 @@ function Block_0x98_finalize_allocation(st: ExecutingState, ghost calldata: Arra
     var s4 := Push2(s3, 0x63);
     assume s4.IsJumpDest(0x63);
     var s5 := Jump(s4);
-    Block_0x63(s5, calldata) 
+    Block_0x63(s5, size, memPtr) 
 }
 
 
@@ -632,7 +790,8 @@ function Block_0xfc(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': 
     var s5 := Push2(s4, 0x8c);
     assume s5.IsJumpDest(0x8c);
     var s6 := Jump(s5);
-    Block_0x8c_allocate_memory(s6, calldata)
+    ghost var size := s6.Peek(0);
+    Block_0x8c_allocate_memory(s6, size)
 }
 
 /*
@@ -758,7 +917,7 @@ function Block_0x14e(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st':
 0000015d: PUSH2 0x39    //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, 0x39]
 00000160: JUMP          //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize] jump to 0x39
 */
-function Block_0x15c(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
+function {:opaque} Block_0x15c(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': State)
     requires st.PC() == 0x15c
     requires st.Capacity() >= 2
     ensures st'.IsRevert()
