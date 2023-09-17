@@ -153,6 +153,7 @@
 0000007e: OR        // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr))]
 0000007f: PUSH2 0x87  // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr)), 0x87]
 00000082: JUMPI         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64)] jump to panic 0x41 otherwise mstore(64, newFreePtr)
+
 00000083: PUSH1 0x40    //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f, (not(31) and (31 + 96)) + load(64), 0x40]
 00000085: MSTORE        //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109, 0x9f]  -> mstore(64, newFreePtr)
 00000086: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109] jump to 0x9f
@@ -309,7 +310,7 @@ function abi_decode_t_struct$_StateProof_$8_memory_ptr(headStart, end) -> value 
 000000f5: DUP3          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96, 4 + 0, calldatasize]
 000000f6: SUB           //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 96, calldatasize - 4]
 000000f7: SLT           //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, calldatasize - 4 < 96]
-000000fd: PUSH2 0x13d   //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, calldatasize - 4 < 96, 0x13d]
+000000f8: PUSH2 0x13d   //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, calldatasize - 4 < 96, 0x13d]
 000000fb: JUMPI         //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize] jump to 0x13d if calldatasize - 4 < 96 ==> and revert
                         //  if slt(sub(end, headStart), 0x60) is true
 000000fc: PUSH2 0x136   //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, calldatasize, 0x136] 
@@ -382,6 +383,7 @@ function abi_decode_t_struct$_StateProof_$8_memory_ptr(headStart, end) -> value 
 00000149: SLT           //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, calldatasize - 4 < 96]  slt(sub(dataEnd, headStart), 96)
 0000014a: PUSH2 0x15c   //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize, calldatasize - 4 < 96, 0x15c]
 0000014d: JUMPI         //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize] jump to 0x15c if calldatasize - 4 < 96
+
 0000014e: PUSH2 0x159   //  [p, 0x1b8, 0x1a7, 0x1a2, 4, calldatasize] and calldatasize - 4 >= 96
 00000151: SWAP2         //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4]
 00000152: PUSH1 0x0     //  [p, 0x1b8, 0x1a7, 0x1a2, calldatasize, 4, 0]

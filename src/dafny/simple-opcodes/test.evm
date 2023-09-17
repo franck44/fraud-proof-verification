@@ -1,0 +1,54 @@
+
+======= test.yul (EVM) =======
+
+Pretty printed source:
+object "Runtime" {
+    code {
+        {
+            let value := round_up_to_mul_of(calldataload(0))
+            mstore(0, value)
+        }
+        function round_up_to_mul_of(value) -> result
+        {
+            result := and(add(value, 31), not(31))
+        }
+    }
+}
+
+
+Binary representation:
+60075f35600b565b5f52005b601f80199101169056
+
+Text representation:
+    /* "test.yul":309:347   */
+  tag_2
+    /* "test.yul":344:345   */
+  0x00
+    /* "test.yul":331:346   */
+  calldataload
+    /* "test.yul":309:347   */
+  tag_1
+  jump	// in
+tag_2:
+    /* "test.yul":424:425   */
+  0x00
+    /* "test.yul":417:433   */
+  mstore
+    /* "test.yul":33:457   */
+  stop
+    /* "test.yul":38:156   */
+tag_1:
+    /* "test.yul":129:131   */
+  0x1f
+    /* "test.yul":134:141   */
+  dup1
+  not
+    /* "test.yul":118:132   */
+  swap2
+  add
+    /* "test.yul":114:142   */
+  and
+    /* "test.yul":38:156   */
+  swap1
+  jump	// out
+

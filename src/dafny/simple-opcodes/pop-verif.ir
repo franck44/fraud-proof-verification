@@ -63,10 +63,11 @@ object "VerifierHelper_46" {
 
             }
 
-            function allocate_unbounded() -> memPtr {
+            /* x */ function allocate_unbounded() -> memPtr {
                 memPtr := mload(64)
             }
 
+			
             function revert_error_dbdddcbe895c83990c08b3492a0e83918d802a52331272ac6fdb6a7c4aea3b1b() {
                 revert(0, 0)
             }
@@ -79,11 +80,13 @@ object "VerifierHelper_46" {
                 revert(0, 0)
             }
 
+			// @todo There is an issue with this function if value is too close to TWO_256
+			//	it overflows
             /* x */ function round_up_to_mul_of_32(value) -> result {
                 result := and(add(value, 31), not(31))
             }
 
-            function panic_error_0x41() {
+            /* x */ function panic_error_0x41() {
                 mstore(0, 35408467139433450592217433187231851964531694900788300625387963629091585785856)
                 mstore(4, 0x41)
                 revert(0, 0x24)

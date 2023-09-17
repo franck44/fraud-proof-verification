@@ -522,9 +522,10 @@ function Block_0x63(st: ExecutingState, ghost size: u256, ghost memPtr: u256):(s
 */
 function Block_0x6d(st: ExecutingState, ghost memPtr: u256, ghost size: u256):(st': State)
     requires st.PC() == 0x6d
-    requires st.Operands() >= 3
+    requires st.Operands() >= 4
     requires st.Capacity() >= 2
     requires st.Peek(2) == 0x9f
+    requires st.Peek(3) == 0x109
     requires memPtr == st.Peek(1)
     requires size == st.Peek(0)
     /** Allocate beyond available memory generates a REVERT. */
@@ -535,6 +536,8 @@ function Block_0x6d(st: ExecutingState, ghost memPtr: u256, ghost size: u256):(s
     var s2 := Dup(s1, 2);   
     var s3 := Add(s2);      
     assert s3.Peek(2) == 0x9f;
+    assert s3.Peek(3) == 0x109;
+
     //  newFreePtr is s3.Peek(0)
     ghost var newFreePtr := s3.Peek(0);
     assert newFreePtr == ((memPtr as nat + size as nat) % TWO_256) as u256 ;
@@ -542,16 +545,20 @@ function Block_0x6d(st: ExecutingState, ghost memPtr: u256, ghost size: u256):(s
     var s4 := Swap(s3, 1);  
     var s5 := Dup(s4, 2);   
     var s6 := Lt(s5);   
+    assert s6.Peek(3) == 0x109;
     assert s6.Peek(2) == 0x9f;
     assert s6.Peek(1) == newFreePtr;
 
     assert s6.Peek(0) == if newFreePtr < memPtr then 1 else 0;
     // gt(newFreePtr, 0xffffffffffffffff) 0xffffffffffffffff == 2^64 - 1
     var s7 := Push8(s6, 0xffffffffffffffff); 
+    // assert s7.Peek(4) == 0x109; 
+    // assert s7.Peek(3) == 0x9f; 
     var s8 := Dup(s7, 3);  
     var s9 := Gt(s8); 
-    assert s9.Peek(3) == 0x9f; 
-    assert s9.Peek(2) == newFreePtr;
+    // assert s9.Peek(4) == 0x109; 
+    // assert s9.Peek(3) == 0x9f; 
+    // assert s9.Peek(2) == newFreePtr;
     assert 0xffffffffffffffff == TWO_64 - 1;
     assert s9.Peek(0) == if newFreePtr > 0xffffffffffffffff then 1 else 0;
     // or(gt(newFreePtr, 0xffffffffffffffff), lt(newFreePtr, memPtr))
@@ -561,6 +568,7 @@ function Block_0x6d(st: ExecutingState, ghost memPtr: u256, ghost size: u256):(s
     var s11 := Push2(s10, 0x87);
     // JumpI to Panic 
     assume s11.IsJumpDest(0x87);
+    assert s11.Peek(4) == 0x109;
     assert s11.Peek(3) == 0x9f;
     assert s11.Peek(2) == newFreePtr;
     var s12 := JumpI(s11);
@@ -569,6 +577,7 @@ function Block_0x6d(st: ExecutingState, ghost memPtr: u256, ghost size: u256):(s
         Block_0x87(s12)
     else  
         assert s12.PC() == 0x83;
+        assert s12.Peek(2) == 0x109;
         assert s12.Peek(1) == 0x9f;
         assert s12.Peek(0) == newFreePtr;
         // s12
@@ -583,8 +592,9 @@ function Block_0x6d(st: ExecutingState, ghost memPtr: u256, ghost size: u256):(s
 /** new memory pointer is within bounds <= TWO_64 - 1  */
 function Block_0x83_mstore_64(st: ExecutingState, ghost newFreePtr: u256):(st': State)
     requires st.PC() == 0x83 
-    requires st.Operands() >= 2
+    requires st.Operands() >= 3
     requires st.Capacity() >= 1
+    requires st.Peek(2) == 0x109
     requires st.Peek(1) == 0x9f
     requires st.Peek(0) == newFreePtr
 {
@@ -593,7 +603,7 @@ function Block_0x83_mstore_64(st: ExecutingState, ghost newFreePtr: u256):(st': 
     assume s2.IsJumpDest(s2.Peek(0));
     var s3 := Jump(s2);
     assert s3.PC() == 0x9f;
-    s3
+    Block_0x9f(s3)
 }
 
 
@@ -684,7 +694,24 @@ function Block_0x98_finalize_allocation(st: ExecutingState, ghost size: u256, gh
     Block_0x63(s5, size, memPtr) 
 }
 
+/*
 
+//  from 00000086: JUMP          //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109] jump to 0x9f
+0000009f: JUMPDEST  // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64), 0x109]
+000000a0: JUMP      //  [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64)] jump to 0x109 
+
+return from finalise allocation
+*/
+function Block_0x9f(st: ExecutingState):(st': State)
+    requires st.PC() == 0x9f
+    requires st.Operands() >= 1
+    requires st.Peek(0) == 0x109
+{
+    var s1 := JumpDest(st);
+    assume s1.IsJumpDest(s1.Peek(0));
+    var s2 := Jump(s1);
+    Block_0x109(s2)
+}
 /*
 function abi_decode_t_struct$_StateProof_$8_memory_ptr(headStart, end) -> value {
                 if slt(sub(end, headStart), 0x60) { revert_error_3538a459e4a0eb828f1aed5ebe5dc96fe59620a31d9b33e41259bb820cae769f() }
@@ -794,6 +821,25 @@ function Block_0xfc(st: ExecutingState, ghost calldata: Arrays.Array<u8>):(st': 
     Block_0x8c_allocate_memory(s6, size)
 }
 
+/*
+// return from allocate memory 
+00000109: JUMPDEST      // [p, 0x1b8, 0x1a7, 4 + 0, 0x1a2, 0x136, calldatasize, mload(64)]
+0000010a: SWAP4         //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0 ]
+0000010b: PUSH2 0x117   //   [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117 ]
+0000010e: DUP3          //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize ]
+0000010f: PUSH1 0x0     //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize, 0 ]
+// add(value, 0x00)
+00000111: DUP4          //   [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize, 0, 4 + 0]
+00000112: ADD           //  [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize, 4 + 0 + 0]
+00000113: PUSH2 0xb9    //  
+// call to abi_decode_t_bytes32(add(headStart, offset), end))
+00000116: JUMP          // jump to 0xb9 (abi_decode_t_bytes32) [p, 0x1b8, 0x1a7, mload(64) , 0x1a2, 0x136, calldatasize, 4 + 0, 0x117, calldatasize, 4 + 0 + 0]
+*/
+function Block_0x109(st: ExecutingState): (st': State) 
+    requires st.PC() == 0x109
+{
+    st
+}
 /*
 
 //  from fd 
