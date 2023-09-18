@@ -1,5 +1,4 @@
 
-// include "../../../evm-dafny/src/dafny/state.dfy"
 include "../../../evm-dafny/src/dafny/util/int.dfy"
 
 module Yul {
