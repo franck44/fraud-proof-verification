@@ -4,6 +4,8 @@ include "../../../../evm-dafny/src/dafny/evm.dfy"
 
 include "../yul-semantics.dfy"   
 
+/**
+ */
 module maxYul { 
 
     import opened Int
@@ -19,7 +21,20 @@ module maxYul {
     const tag_3: u8 := 0x1b
     const tag_4: u8 := 0x18
 
+    /**
+     *  When a JUMP or JUMPI is executed we need to make sure the target location
+     *  is a JUMPDEST.
+     *  This axiom enforces it.
+     */
+    lemma {:axiom} ValidJumpDest(s: ExecutingState)
+        ensures s.IsJumpDest(tag_1 as u256)
+        ensures s.IsJumpDest(tag_2 as u256)
+        ensures s.IsJumpDest(tag_3 as u256)
+        ensures s.IsJumpDest(tag_4 as u256)
 
+    /**
+     *  Translation of the of the Yul code in Dafny.
+     */
     method Max(x: u256, y: u256) returns (result: u256) 
         ensures result == x || result == y 
         ensures result >= x && result >= y 
@@ -31,7 +46,18 @@ module maxYul {
     }
 
     /**
+     *  Proof of simmulation.
      *  Prove that bytecode at tag1 returns same as Max.
+     *
+     *  Shows that every "move" in the bytecode (AtTag ...) can be matched by a move in
+     *  in the Yul code.
+     *  As a result the bytecode simulates the Yul code and Yul safety properties (ensures)
+     *  are enfored on the bytecode.
+     *
+     *  @example    Executing `ExecuteFromTag1(st)` can be matched by executing 
+     *              `result := x`. After that, depending on `x < y` we can go into
+     *              two different branches. Both can be matched respectively by `result := y` and 
+     *              `skip` (no instruction). 
      */
     method MaxProof(x: u256, y: u256, st:ExecutingState) returns (result: u256, s': State) 
         requires st.Operands() >= 3
@@ -47,56 +73,61 @@ module maxYul {
         ensures s'.Operands() == st.Operands() - 2
         ensures s'.Peek(0) == result  
     {
-        var s1 := AtTag1(st);
-        result := x;
+        var s1 := ExecuteFromTag1(st);           //  bytecode move
+        result := x;                    //  matching Yul move
         if lt(x, y) > 0 {
-            s' := AtTag4(AtTag3(s1));
-            result := y;
+            s' := ExecuteFromTag4(ExecuteFromTag3(s1));   //  bytecode move
+            result := y;                //  matching Yul move
         } else {
-            s' := AtTag4(s1);
-        }
+            s' := ExecuteFromTag4(s1);           //  byecode move
+        }                               //  matching Yul move: Skip
     }
 
-     //  Let + mstore
+    /**
+     *  Translation of Yul code in Dafny.
+     */
     method Main() 
     {
-        var x := 8;
-        var y := 3;
-        var z := Max(x, y);
-        var _ := mstore(0x40, z);
+        var x := 8;                 //   let
+        var y := 3;                 //  let
+        var z := Max(x, y);         //  funcall 
+        var _ := mstore(0x40, z);   //  memory store
     }
 
+    /**
+     *  Proof of simulation for Main.
+     */
     method MainProof(st:ExecutingState) returns (z': u256, s': State) 
         requires st.Capacity() >= 5
         requires st.Operands() >= 0
         requires st.PC() == 0 as nat
-        requires st.IsJumpDest(tag_2 as u256)
         
         ensures s'.EXECUTING?
         ensures s'.MemSize() > 0x40 + 31 
         ensures s'.Read(0x40) == z'
     {
-        var x := 8;
-        var y := 3;
-        var s1 := AtPC0(st);
+        ValidJumpDest(st);
+        var s1 := ExecuteFromZero(st);                //  bytecode move
+        var x := 8;                         //  Yul move
+        var y := 3;                         //  Yul move
 
-        var z, s2 := MaxProof(x, y, s1);
-        assert z == s2.Peek(0);
+        var z, s2 := MaxProof(x, y, s1);    //  Simulation of call to Max.
+        assert z == s2.Peek(0);             
 
-        s' := AtTag2(s2);
-        z':= z;
-
-        var _ := mstore(0x40, z);
+        s' := ExecuteFromTag2(s2);                   //  Bytecode move
+        z':= z;                             //  Yul move
+        var _ := mstore(0x40, z);           //  Yul move
         //  check that mem store contains z 
         assert s'.Read(0x40) == z;
     }
 
-   
-    function AtPC0(st:ExecutingState): (s': State) 
+    /**
+     *  Code starting at PC == 0.
+     */
+    function ExecuteFromZero(st:ExecutingState): (s': State) 
         requires st.Capacity() >= 5
         requires st.Operands() >= 0
         requires st.PC() == 0 as nat
-        requires st.IsJumpDest(tag_2 as u256)
 
         ensures s'.EXECUTING?
         ensures s'.PC() == tag_1 as nat
@@ -109,20 +140,19 @@ module maxYul {
         00000007: PUSH1 0xf     //  tag_1 
         00000009: JUMP
         */
+        ValidJumpDest(st);
         var s1 := Push1(st, tag_2);
         var s2 := Push1(s1, 0x08);
         var s3 := Push1(s2, 0x03);
         var s4 := Swap(s3, 1);
         assert s4.Peek(2) == tag_2 as u256;
         var s5 := Push1(s4, tag_1);
-        assume s5.IsJumpDest(tag_1 as u256);
         assert s5.Peek(3) == tag_2 as u256;
-        assert s5.IsJumpDest(s5.Peek(3) as u256);
         var s6 := Jump(s5);
         s6
     }
 
-    function AtTag2(st:ExecutingState): (s': State)
+    function ExecuteFromTag2(st:ExecutingState): (s': State)
         requires st.Capacity() >= 1
         requires st.Operands() >= 0
         requires st.PC() == tag_2 as nat
@@ -139,7 +169,7 @@ module maxYul {
         s3
     }
 
-    function AtTag1(st:ExecutingState): (s': State)
+    function ExecuteFromTag1(st:ExecutingState): (s': State)
         requires st.Capacity() >= 2
         requires st.Operands() >= 3
         requires st.PC() == tag_1 as nat
@@ -163,6 +193,7 @@ module maxYul {
         00000015: PUSH1 0x1b
         00000017: JUMPI
         */
+        ValidJumpDest(st);
         var s1 := JumpDest(st); //  r, y, x
         var s2 := Swap(s1, 2);  //  x, y, r 
         var s3 := Swap(s2, 1);  //  x, r, y
@@ -171,13 +202,11 @@ module maxYul {
         assert s5.PC() == 0x14;
         var s6 := Lt(s5);       //  x, r, y, x < y
         var s7 := Push1(s6, tag_3); //  x, r, y, x < y, tag_ 3
-        assume s7.IsJumpDest(tag_3 as u256);
         var s8 := JumpI(s7);        //  x, r, y 
-
         s8 
     }
 
-    function AtTag4(st:ExecutingState): (s': State)
+    function ExecuteFromTag4(st:ExecutingState): (s': State)
         requires st.Operands() >= 3
         requires st.PC() == tag_4 as nat
         requires st.IsJumpDest(st.Peek(1))
@@ -201,7 +230,7 @@ module maxYul {
         s11
     }
 
-    function AtTag3(st:ExecutingState): (s': State)
+    function ExecuteFromTag3(st:ExecutingState): (s': State)
         requires st.Operands() >= 3
         requires st.Capacity() >= 1
         requires st.PC() == tag_3 as nat
@@ -211,8 +240,6 @@ module maxYul {
         ensures s'.EXECUTING?
         ensures s'.PC() == tag_4 as nat 
         ensures s'.Operands() == st.Operands() 
-        // ensures s'.Peek(0) == st.Peek(0)
-
     {
         /*
         0000001b: JUMPDEST      //  tag_ 3  x2, x1, x0 
@@ -238,128 +265,4 @@ module maxYul {
         s8 
     }
 
-
-    // function {:opaque} equivMax(x: u256, y: u256, st: ExecutingState): (r:(u256, State))
-    //     requires st.Capacity() >= 2
-    //     requires st.Operands() >= 3
-    //     requires st.PC() == 0x0f
-    //     requires st.IsJumpDest(st.Peek(2))
-
-    //     requires st.Peek(0) == x 
-    //     requires st.Peek(1) == y 
-
-    //     ensures st.EXECUTING?
-    //     ensures r.1.EXECUTING?
-    //     ensures r.1.Operands() == st.Operands() - 2
-    //     ensures r.1.Peek(0) == r.0
-    // {
-    //     (max(x, y), maxEVM(st))
-    // }
-
-    // // tag_ 1
-    // method equivMax(x: u256, y: u256, st: ExecutingState) returns (result: u256, st': State)
-    //     requires st.Capacity() >= 2
-    //     requires st.Operands() >= 3
-    //     requires st.PC() == 0x0f
-    //     requires st.IsJumpDest(st.Peek(2))
-
-    //     requires st.Peek(0) == x 
-    //     requires st.Peek(1) == y 
-
-    //     ensures st'.EXECUTING?
-    //     ensures st'.Operands() >= 1 
-    //     // == st.Operands() - 1 
-    //     ensures st'.Peek(0) == result
-    //     // ensures st'.PC() == st.Peek(2) as nat
-    //     // ensures r.0 == add(x,add(y, 1))
-    // {
-    //     // var result := 0;
-    //     var s1 := JumpDest(st);
-    //     var s2 := Swap(s1, 1);
-    //     var s3 := Dup(s2, 1);
-    //     var s4 := Dup(s3, 3);
-    //     // assert s4.Peek(0) == x;
-    //     assert s4.Peek(1) == y;
-    //     var s5 := Lt(s4);
-    //     assert s5.Peek(1) == y;
-    //     // assert s5.Peek(0) == if Lt(x, y) then 1 else 0;
-    //     assert s5.Peek(0) == if lt(x, y) != 0 then 1 else 0;
-    //     var s6 := Push1(s5, 0x1b);
-    //     // assert s6.Peek(1) == s5.Peek(0);
-
-    //     assume s6.IsJumpDest(s6.Peek(0));
-    //     var s7 := JumpI(s6);
-
-    //     if lt(x, y) > 0 {
-    //         assert s6.Peek(1) != 0;
-    //         assert s7.PC() == 0x1b;
-    //         var result := y;
-    //         assert result == s4.Peek(1);
-    //         assert result == s7.Peek(0);
-    //         assert s7.Peek(0) == st.Peek(1);
-    //         var s8 := JumpDest(s7);
-    //         var s9 := Push1(s8, 0x17);
-    //         var s10 := Jump(s9);
-    //         // return result, s7;
-    //         // assert 
-    //         // s7 := 
-    //         // assert 
-    //     } else {
-    //         // assert s6.Peek(1) == 0;
-    //         assert s7.PC() == 0x17;
-    //         var s8 := JumpDest(s7);
-    //         var s9 := Pop(s8);
-    //         var s10 := Swap(s9, 1);
-    //         assert s10.IsJumpDest(s10.Peek(0));
-    //         result := x;
-    //         assert result == s4.Peek(0);
-    //         assert result == s10.Peek(1);
-    //         assert s7.Peek(0) == st.Peek(1);
-    //         return result, Jump(s10);
-    //     }
-    // }
-
-    // function maxEVM(st:ExecutingState): (s': State)
-    //     requires st.Capacity() >= 2
-    //     requires st.Operands() >= 3
-    //     requires st.PC() == 0x0f
-    //     requires st.IsJumpDest(st.Peek(2))
-
-    //     ensures s'.EXECUTING?
-    //     ensures s'.Operands() >= 1
-    //     // == st.Operands() + 1
-    // {
-    //     /*
-    //     0000000f: JUMPDEST      //  tag_1 
-    //     00000010: SWAP2
-    //     00000011: SWAP1
-    //     00000012: DUP1
-    //     00000013: DUP4
-    //     00000014: LT
-    //     00000015: PUSH1 0x1b
-    //     00000017: JUMPI
-    //     */
-    //     var s1 := JumpDest(st);
-    //     var s2 := Swap(s1, 2);
-    //     var s3 := Swap(s2, 1);
-    //     var s4 := Dup(s3, 1);
-    //     var s5 := Dup(s4, 4);
-    //     var s6 := Lt(s5);
-    //     var s7 := Push1(s6, tag_3);
-    //     assume s7.IsJumpDest(tag_3 as u256);
-    //     var s8 := JumpI(s7);
-
-    //     if s6.Peek(1) != 0 then
-    //         assert s7.PC() == tag_3;
-    //         s7
-    //     else 
-    //         assert s7.PC() == 0x17;
-    //         var s8 := JumpDest(s7);
-    //         var s9 := Pop(s8);
-    //         var s10 := Swap(s9, 1);
-    //         assert s10.IsJumpDest(s10.Peek(0));
-    //         Jump(s10)
-    // }
-
-   
 }
