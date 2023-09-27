@@ -16,6 +16,8 @@ object "Runtime" {
 
             let z := foo1(x, y)
 
+            y := 4
+
             mstore(0x40, z)
             
         }
