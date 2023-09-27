@@ -47,12 +47,14 @@ module maxYul {
         ensures s'.Operands() == st.Operands() - 2
         ensures s'.Peek(0) == result  
     {
-        s' := AtTag1(st);
+        var s1 := AtTag1(st);
         result := x;
         if lt(x, y) > 0 {
+            s' := AtTag4(AtTag3(s1));
             result := y;
+        } else {
+            s' := AtTag4(s1);
         }
-
     }
 
      //  Let + mstore
@@ -83,14 +85,14 @@ module maxYul {
 
         s' := AtTag2(s2);
         z':= z;
-        
+
         var _ := mstore(0x40, z);
         //  check that mem store contains z 
         assert s'.Read(0x40) == z;
     }
 
    
-    function AtPC0(st:ExecutingState): (s': State)
+    function AtPC0(st:ExecutingState): (s': State) 
         requires st.Capacity() >= 5
         requires st.Operands() >= 0
         requires st.PC() == 0 as nat
@@ -137,7 +139,7 @@ module maxYul {
         s3
     }
 
-    function {:opaque} AtTag1(st:ExecutingState): (s': State)
+    function AtTag1(st:ExecutingState): (s': State)
         requires st.Capacity() >= 2
         requires st.Operands() >= 3
         requires st.PC() == tag_1 as nat
@@ -145,15 +147,17 @@ module maxYul {
         requires st.Peek(2) == tag_2 as u256
 
         ensures s'.EXECUTING?
-        ensures s'.Operands() == st.Operands() - 2  
-        ensures s'.PC() == tag_2 as nat
-        ensures s'.Peek(0) == if st.Peek(0) < st.Peek(1) then st.Peek(1) else st.Peek(0)
+        ensures s'.Operands() == st.Operands()  
+        ensures s'.Peek(0) == st.Peek(1)
+        ensures s'.Peek(1) == st.Peek(2)
+        ensures s'.Peek(2) == st.Peek(0)
+        ensures s'.PC() == if st.Peek(0) < st.Peek(1) then tag_3 as nat else tag_4 as nat
     {
         /*
         0000000f: JUMPDEST      //  tag_1 
         00000010: SWAP2
         00000011: SWAP1
-        00000012: DUP1
+        00000012: DUP1 
         00000013: DUP4
         00000014: LT
         00000015: PUSH1 0x1b
@@ -166,30 +170,14 @@ module maxYul {
         var s5 := Dup(s4, 4);   //  x, r, y, y, x 
         assert s5.PC() == 0x14;
         var s6 := Lt(s5);       //  x, r, y, x < y
-        assert s6.Peek(0) == if s5.Peek(0) < s5.Peek(1) then 1 else 0;
         var s7 := Push1(s6, tag_3); //  x, r, y, x < y, tag_ 3
-        assert s7.Peek(1) == if st.Peek(0) < st.Peek(1) then 1 else 0;
         assume s7.IsJumpDest(tag_3 as u256);
         var s8 := JumpI(s7);        //  x, r, y 
-        assert s8.Peek(0) == st.Peek(1);
-        if s7.Peek(1) != 0 then
-            assert st.Peek(0) < st.Peek(1);
-            assert s8.PC() == tag_3 as nat;
-            //  should return st.Peek(1)
-            assert s8.Peek(1) == st.Peek(2); 
-            assert s8.IsJumpDest(s8.Peek(1)); 
-            var s' := AtTag3(s8);
-            assert s'.Peek(0) == st.Peek(1);
-            s'
-        else 
-            //  tag_4 
-            assert st.Peek(0) >= st.Peek(1);
-            //  should return st.Peek(0)
-            assert s8.PC() == tag_4 as nat;
-            AtTag4(s8)
+
+        s8 
     }
 
-    function {:opaque} AtTag4(st:ExecutingState): (s': State)
+    function AtTag4(st:ExecutingState): (s': State)
         requires st.Operands() >= 3
         requires st.PC() == tag_4 as nat
         requires st.IsJumpDest(st.Peek(1))
@@ -213,7 +201,7 @@ module maxYul {
         s11
     }
 
-    function {:opaque} AtTag3(st:ExecutingState): (s': State)
+    function AtTag3(st:ExecutingState): (s': State)
         requires st.Operands() >= 3
         requires st.Capacity() >= 1
         requires st.PC() == tag_3 as nat
@@ -221,9 +209,9 @@ module maxYul {
         requires st.Peek(1) == tag_2 as u256
 
         ensures s'.EXECUTING?
-        ensures s'.PC() == tag_2 as nat 
-        ensures s'.Operands() == st.Operands() - 2
-        ensures s'.Peek(0) == st.Peek(0)
+        ensures s'.PC() == tag_4 as nat 
+        ensures s'.Operands() == st.Operands() 
+        // ensures s'.Peek(0) == st.Peek(0)
 
     {
         /*
@@ -247,7 +235,7 @@ module maxYul {
         assume s7.IsJumpDest(tag_4 as u256);
         var s8 := Jump(s7);
         assert s8.Peek(0) == 0; //  x0, x1, 0 
-        AtTag4(s8)
+        s8 
     }
 
 
